@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 // grayed-out entry opens an info modal with a "Request to join beta" button;
 // requests land in the feedback table (kind=beta_request, context=tool id).
 const TOOLS = [
+  { id: "diagnostics", icon: "🩺", name: "Business Diagnostics", desc: "Finds where revenue is leaking, shows you how to tighten up your operations, and points out exactly where you could improve — a full health check on your cleaning business." },
   { id: "inbox", icon: "✉️", name: "AI Inbox", desc: "Drafts every reply for text and email — you just approve and send." },
   { id: "soul", icon: "🔮", name: "Ask Your Business", desc: "“Did Jordan Ford say why they canceled?” It knows why. Ask any question about your business and get a real answer from your own data." },
   { id: "dispatch", icon: "🚨", name: "Dispatch Recovery", desc: "A cleaner calls out and it re-books the day's schedule for you." },
