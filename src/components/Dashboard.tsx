@@ -9,7 +9,7 @@ const tierColor: Record<string, string> = { star: "var(--star)", solid: "var(--s
 const tierBg: Record<string, string> = { star: "#0f9d58", solid: "#1a73e8", watch: "#e8930c", risk: "#d93025" };
 const initials = (n: string) => n.split(" ").map((x) => x[0]).slice(0, 2).join("").toUpperCase();
 
-type Tab = "score" | "churn" | "credits" | "complaints" | "slack";
+type Tab = "score" | "churn" | "credits" | "complaints";
 type FB = { open: boolean; kind: "note" | "beta_request"; context: string; message: string; status: "" | "saving" | "ok" | "err" };
 
 export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?: string }) {
@@ -44,7 +44,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
     ["Jobs completed", t.jobs, "this period"],
     ["Revenue / mo", money(t.rev_mo), "run-rate"],
     ["Recurring share", t.recurring_share + "%", "of jobs recurring"],
-    ["Complaints", t.total_complaints, "OpenPhone · Limited Beta"],
+    ["Complaints", "—", "Limited beta"],
     ["Client credits", money(t.credits), "refunds + comps"],
   ];
 
@@ -86,7 +86,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
 
       <div className="kpis">
         {kpis.map((k) => (
-          <div className="kpi" key={k[0]}>
+          <div className="kpi" key={k[0]} style={k[0] === "Complaints" ? { opacity: 0.5 } : undefined}>
             <div className="l">{k[0]}</div>
             <div className="v">{k[1]}</div>
             <div className="m">{k[2]}</div>
@@ -95,7 +95,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
       </div>
 
       <div className="tabs">
-        {([["score", "🏆 Scoreboard"], ["churn", "📉 Churn"], ["credits", "💸 Refunds & comps"], ["complaints", "📞 Complaints"], ["slack", "🚩 Who's slacking"]] as [Tab, string][]).map(([v, label]) => (
+        {([["score", "🏆 Scoreboard"], ["churn", "📉 Churn"], ["credits", "💸 Refunds & comps"], ["complaints", "📞 Complaints"]] as [Tab, string][]).map(([v, label]) => (
           <div key={v} className={"tab" + (tab === v ? " active" : "")} onClick={() => setTab(v)}>{label}</div>
         ))}
       </div>
@@ -112,7 +112,9 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
           <div style={{ overflow: "auto", maxHeight: 620 }}>
             <table>
               <thead>
-                <tr>{H.map((h) => <th key={String(h[0])} className={h[2]} onClick={() => onSort(h[0])}>{h[1]}</th>)}</tr>
+                <tr>{H.map((h) => h[0] === "complaint_per_clean"
+                  ? <th key={String(h[0])} className={h[2]} style={{ cursor: "default", opacity: 0.55 }}>{h[1]}</th>
+                  : <th key={String(h[0])} className={h[2]} onClick={() => onSort(h[0])}>{h[1]}</th>)}</tr>
               </thead>
               <tbody>
                 {sorted.map((c) => (
@@ -123,14 +125,14 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
                     <td>{money(c.rev_mo)}</td>
                     <td className={c.canc_rate > 7 ? "warn" : ""}>{pct1(c.canc_rate)}</td>
                     <td className={c.credits > 50 ? "warn" : ""}>{c.credits > 0 ? money(c.credits) : "—"}</td>
-                    <td className="samptd">{c.complaint_per_clean.toFixed(2)}</td>
+                    <td className="samptd" style={{ opacity: 0.4 }} title="Limited beta — request access on the Complaints tab">🔒</td>
                     <td><div className="scorecell"><div className="sbar"><i style={{ width: c.score + "%", background: tierColor[c.tier] }} /></div><span className="scnum">{c.score}</span></div></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="section-note">Score = 40% complaints-per-clean · 25% churn (cancellations) · 25% refunds+comps per job · 10% recurring retention. Revenue is a 30-day run-rate.<br /><span style={{ color: "#9aa1ab" }}>*Churn = lifetime cancelled ÷ total bookings (a cancellation proxy until the paused/cancelled recurring export is loaded).</span></div>
+          <div className="section-note">Score = 40% complaints-per-clean (limited beta) · 25% churn (cancellations) · 25% refunds+comps per job · 10% recurring retention.<br /><span style={{ color: "#9aa1ab" }}>*Churn = lifetime cancelled ÷ total bookings (a cancellation proxy until the paused/cancelled recurring export is loaded).</span></div>
         </div>
       )}
 
@@ -151,44 +153,19 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
       )}
 
       {tab === "complaints" && (
-        <div className="panel">
+        <div className="panel" style={{ opacity: 0.9 }}>
           <h2>
             Complaints / Clean <span className="betachip">Limited Beta</span>
-            <button className="reqbtn" style={{ marginLeft: "auto" }} onClick={() => openFeedback("beta_request", "Complaints per Clean")}>Request to be added to the beta for this feature</button>
           </h2>
-          {bar([...data.cleaners].sort((a, b) => b.complaint_per_clean - a.complaint_per_clean), "complaint_per_clean", (v) => v.toFixed(2), (c) => (c.complaint_per_clean > 0.2 ? "#d93025" : c.complaint_per_clean > 0.1 ? "#e8930c" : "#7c3aed"))}
-          <div className="section-note"><b>How it works:</b> Sergio pulls inbound calls &amp; texts from OpenPhone (Quo), flags complaints via keywords + AI-summary sentiment, matches the sender&apos;s phone to the client, and attributes it to the cleaner who serviced them in the prior ~48h — a complaint rate covering every job. This feature is in limited beta; request access above.</div>
-        </div>
-      )}
-
-      {tab === "slack" && (
-        <div className="panel">
-          <h2>🚩 Flagged for a conversation <span className="mut" style={{ fontWeight: 400 }}>— lowest composite scores</span></h2>
-          {[...data.cleaners].sort((a, b) => a.score - b.score).slice(0, 4).map((c) => {
-            const chips: [string, string][] = [];
-            if (c.canc_rate > 7) chips.push(["bad", pct1(c.canc_rate) + " cancel rate"]);
-            if (c.complaint_per_clean > 0.15) chips.push(["", c.complaint_per_clean.toFixed(2) + " complaints/clean"]);
-            if (c.refund_ct > 0) chips.push(["bad", c.refund_ct + " refund" + (c.refund_ct > 1 ? "s" : "") + " (" + money(c.refunds) + ")"]);
-            if (c.Status === "Inactive") chips.push(["bad", "already left"]);
-            if (!chips.length) chips.push(["", "watch — trending down"]);
-            const reasons: string[] = [];
-            if (c.complaint_per_clean > 0.15) reasons.push("highest complaint density on the team");
-            if (c.canc_rate > 7) reasons.push("elevated cancellations");
-            if (c.refund_ct > 0 || c.comp_ct > 0) reasons.push("gave money back to clients");
-            if (c.Status === "Inactive") reasons.push("already churned off the roster");
-            const why = reasons.length ? reasons.join(", ").replace(/^./, (s) => s.toUpperCase()) + "." : "Slipping on the composite — worth a check-in.";
-            return (
-              <div className="flag" key={c.name} data-cleaner={c.name}>
-                <div className="ava" style={{ background: tierBg[c.tier] }}>{initials(c.name)}</div>
-                <div className="body">
-                  <b>{c.name}</b> <span className={"tierb t-" + c.tier}>{c.tier}</span> · score {c.score}
-                  <div className="why">{why}</div>
-                  <div className="chips">{chips.map((x, i) => <span key={i} className={"chip " + x[0]}>{x[1]}</span>)}</div>
-                </div>
-              </div>
-            );
-          })}
-          <div className="section-note">Ranked by composite score. Right-click a cleaner to leave a private note.</div>
+          <div style={{ padding: "36px 20px", textAlign: "center", color: "var(--muted)" }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🔒</div>
+            <p style={{ margin: "0 0 14px", fontSize: 13.5, maxWidth: 460, marginLeft: "auto", marginRight: "auto" }}>
+              Sergio pulls inbound calls &amp; texts from your phone line, flags complaints via
+              AI sentiment, matches the sender to the client, and attributes it to the cleaner
+              who serviced them — a complaint rate covering every job. Currently in limited beta.
+            </p>
+            <button className="reqbtn" onClick={() => openFeedback("beta_request", "Complaints per Clean")}>Request to be added to the beta</button>
+          </div>
         </div>
       )}
 

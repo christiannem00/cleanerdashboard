@@ -36,15 +36,9 @@ export default async function DashboardView({ params }: { params: { id: string }
         </div>
       </header>
 
-      <div className="insight">
-        <h3>Your real quality signal is the phone line, not the star rating.</h3>
-        <p>BookingKoala star ratings are internal-only vanity — every active cleaner sits at 4.9–5.0. So ratings are excluded here. What tells you who&apos;s slacking is what clients say when something&apos;s wrong: they call or text. The <b>Complaints / Clean</b> column is where OpenPhone/Quo plugs in — currently in limited beta.</p>
-      </div>
-
       <Dashboard data={data} uploadId={upload.id} />
 
       <footer>
-        Stored from your BookingKoala export. Star ratings excluded (internal vanity, not Google reviews). Revenue is a 30-day run-rate.<br />
         Sergio — AI back office for cleaning companies.
       </footer>
     </div>

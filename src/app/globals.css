@@ -184,7 +184,15 @@ footer { margin-top: 26px; font-size: 11.5px; color: var(--muted); text-align: c
 .step .field { margin: 10px 0 0; }
 .photoframe { border: none; width: 100%; min-height: calc(100vh - 200px); background: #fff; border-radius: 12px; box-shadow: var(--shadow); margin-top: 12px; }
 
+/* Need-help floating widget */
+.needhelp { position: fixed; right: 18px; bottom: 18px; z-index: 90; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.needhelp-btn { background: #0b0b0b; color: #fff; border: none; border-radius: 999px; padding: 11px 18px; font-weight: 700; font-size: 13.5px; cursor: pointer; font-family: inherit; box-shadow: 0 4px 14px rgba(16,24,40,.25); }
+.needhelp-btn:hover { background: #1c1f26; }
+.needhelp-pop { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 13px 16px; font-size: 13.5px; box-shadow: 0 6px 24px rgba(16,24,40,.18); max-width: 260px; }
+.needhelp-pop a { color: var(--brand); font-weight: 700; }
+
 /* BookingKoala export walkthrough illustrations */
+.bkimg { display: block; max-width: 420px; width: 100%; margin-top: 10px; border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
 .bkshot { display: flex; gap: 10px; margin-top: 10px; background: #f4f6fa; border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 12px; }
 .bkmenu { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
 .bkitem { padding: 7px 10px; border-radius: 8px; color: #4b5563; background: #fff; }
