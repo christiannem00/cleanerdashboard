@@ -19,13 +19,20 @@ const TOOLS = [
   { id: "screening", icon: "🧑‍💼", name: "Applicant Screening", desc: "Screens applicants and gives you a shortlist of who to interview." },
 ];
 
+const INTEGRATIONS = [
+  { id: "connect_openphone", icon: "📞", name: "Connect OpenPhone", desc: "Link your OpenPhone number so Sergio can text customers, chase reviews, and log every call from your existing business line — no new number needed." },
+  { id: "connect_bookingkoala", icon: "🐨", name: "Connect BookingKoala", desc: "Link your BookingKoala account so bookings, customers, and cleaner data sync into Sergio automatically — no more CSV exports." },
+];
+
+const ALL_ITEMS = [...TOOLS, ...INTEGRATIONS];
+
 export default function BetaTools() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [requested, setRequested] = useState<Record<string, boolean>>({});
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
-  const open = TOOLS.find((t) => t.id === openId);
+  const open = ALL_ITEMS.find((t) => t.id === openId);
 
   async function requestBeta(toolId: string, toolName: string) {
     setSending(true);
@@ -54,6 +61,17 @@ export default function BetaTools() {
 
   return (
     <>
+      <div className="sidelabel">Integrations</div>
+      <div className="sidenav">
+        {INTEGRATIONS.map((t) => (
+          <button key={t.id} className="navlink beta" onClick={() => { setOpenId(t.id); setError(""); }}>
+            <span className="navic">{t.icon}</span>
+            <span className="betaname">{t.name}</span>
+            {requested[t.id] && <span className="betatick">✓</span>}
+          </button>
+        ))}
+      </div>
+
       <div className="sidelabel">Coming soon</div>
       <div className="sidenav">
         {TOOLS.map((t) => (
