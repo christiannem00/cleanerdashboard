@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import BetaTools from "@/components/BetaTools";
 
 const NAV = [
   { href: "/dashboard", label: "Cleaner Dashboard", icon: "📊" },
@@ -20,7 +21,7 @@ export default function Sidebar() {
           <small>serviche.com</small>
         </div>
       </Link>
-      <nav className="sidenav">
+      <nav className="sidenav" style={{ flex: "none" }}>
         {NAV.map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(item.href + "/");
@@ -36,6 +37,9 @@ export default function Sidebar() {
           );
         })}
       </nav>
+      <div className="sidescroll">
+        <BetaTools />
+      </div>
       <div className="sidefoot">
         <form action="/auth/signout" method="post">
           <button className="navlink signout" type="submit">

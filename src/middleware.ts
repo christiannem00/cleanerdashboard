@@ -37,6 +37,7 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/upload") ||
     path.startsWith("/reviews") ||
     path.startsWith("/photos") ||
+    path.startsWith("/onboarding") ||
     path === "/rc-app";
 
   if (!user && isProtected) {

@@ -118,3 +118,26 @@ create policy "photo_settings self-insert" on public.photo_settings
 drop policy if exists "photo_settings self-update" on public.photo_settings;
 create policy "photo_settings self-update" on public.photo_settings
   for update using (auth.uid() = user_id);
+
+-- 8) business_profiles: first-login onboarding answers (phone service +
+--    booking software). One row per user, own-row RLS; portal pages redirect
+--    to /onboarding until this row exists.
+create table if not exists public.business_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  phone_service text,          -- quo_openphone | ghl_lcphone | twilio | other
+  phone_service_other text,
+  booking_software text,       -- bookingkoala | zenmaid | other
+  booking_software_other text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.business_profiles enable row level security;
+drop policy if exists "business_profiles self-select" on public.business_profiles;
+create policy "business_profiles self-select" on public.business_profiles
+  for select using (auth.uid() = user_id);
+drop policy if exists "business_profiles self-insert" on public.business_profiles;
+create policy "business_profiles self-insert" on public.business_profiles
+  for insert with check (auth.uid() = user_id);
+drop policy if exists "business_profiles self-update" on public.business_profiles;
+create policy "business_profiles self-update" on public.business_profiles
+  for update using (auth.uid() = user_id);
