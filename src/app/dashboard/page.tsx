@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import WaitlistCta from "@/components/WaitlistCta";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,8 @@ export default async function DashboardList() {
           <Link className="btn" href="/upload">Upload your first BookingKoala CSV</Link>
         </div>
       )}
+
+      <WaitlistCta defaultEmail={user.email ?? ""} />
     </div>
   );
 }
