@@ -100,3 +100,21 @@ alter table public.subscribers enable row level security;
 drop policy if exists "subscribers anon insert" on public.subscribers;
 create policy "subscribers anon insert" on public.subscribers
   for insert with check (true);
+
+-- 7) photo_settings: the operator's Showcase-app share link for the Photo
+--    Management page. One row per user, own-row RLS.
+create table if not exists public.photo_settings (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  showcase_url text,
+  updated_at timestamptz not null default now()
+);
+alter table public.photo_settings enable row level security;
+drop policy if exists "photo_settings self-select" on public.photo_settings;
+create policy "photo_settings self-select" on public.photo_settings
+  for select using (auth.uid() = user_id);
+drop policy if exists "photo_settings self-insert" on public.photo_settings;
+create policy "photo_settings self-insert" on public.photo_settings
+  for insert with check (auth.uid() = user_id);
+drop policy if exists "photo_settings self-update" on public.photo_settings;
+create policy "photo_settings self-update" on public.photo_settings
+  for update using (auth.uid() = user_id);

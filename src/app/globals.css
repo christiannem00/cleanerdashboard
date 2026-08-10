@@ -145,3 +145,41 @@ footer { margin-top: 26px; font-size: 11.5px; color: var(--muted); text-align: c
 .optin { display: flex; gap: 9px; align-items: flex-start; margin-top: 6px; cursor: pointer; }
 .optin input { margin-top: 2px; width: 15px; height: 15px; flex: none; accent-color: var(--brand); }
 .optin span { font-size: 12.5px; color: #4b5563; line-height: 1.35; }
+
+/* ---- portal shell (sidebar) ---- */
+.portal { display: flex; min-height: 100vh; align-items: stretch; }
+.side { width: 226px; flex: none; background: #0b0b0b; padding: 18px 12px 14px; display: flex; flex-direction: column; gap: 18px; position: sticky; top: 0; height: 100vh; }
+.sidebrand { display: flex; align-items: center; gap: 10px; padding: 0 6px; }
+.sidebrand b { display: block; color: #fff; font-size: 15px; letter-spacing: -.2px; }
+.sidebrand small { display: block; color: #6b7280; font-size: 11px; }
+.sidenav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.navlink { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 9px; color: #c7ccd4; font-weight: 600; font-size: 13.5px; transition: .12s; border: none; background: none; cursor: pointer; font-family: inherit; width: 100%; text-align: left; }
+.navlink:hover { background: #16181d; color: #fff; }
+.navlink.active { background: linear-gradient(135deg, var(--brand), var(--brand2)); color: #fff; }
+.navic { font-size: 15px; width: 20px; text-align: center; }
+.sidefoot { border-top: 1px solid #1c1f26; padding-top: 10px; }
+.navlink.signout { color: #8b919b; font-size: 12.5px; }
+.portalmain { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+/* Review Chaser embed */
+.rcframe { border: none; width: 100%; flex: 1; min-height: calc(100vh - 40px); background: #fff; border-radius: 14px; box-shadow: var(--shadow); }
+.rcwrap { display: flex; flex-direction: column; flex: 1; padding: 20px 22px 22px; }
+.rcload { color: var(--muted); font-size: 13px; padding: 40px; text-align: center; }
+
+/* Photo management wizard */
+.steps { display: grid; gap: 12px; margin: 18px 0; }
+.step { display: flex; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); align-items: flex-start; }
+.stepnum { width: 30px; height: 30px; flex: none; border-radius: 9px; background: linear-gradient(135deg, var(--brand), var(--brand2)); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.step b { display: block; font-size: 14px; margin-bottom: 2px; }
+.step p { margin: 0; font-size: 13px; color: #4b5563; }
+.step .field { margin: 10px 0 0; }
+.photoframe { border: none; width: 100%; min-height: calc(100vh - 200px); background: #fff; border-radius: 12px; box-shadow: var(--shadow); margin-top: 12px; }
+
+@media (max-width: 860px) {
+  .portal { flex-direction: column; }
+  .side { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; padding: 10px 12px; gap: 10px; overflow-x: auto; }
+  .sidebrand small { display: none; }
+  .sidenav { flex-direction: row; flex: 1; }
+  .navlink { padding: 8px 10px; white-space: nowrap; }
+  .sidefoot { border-top: none; padding-top: 0; }
+}

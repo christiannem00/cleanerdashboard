@@ -34,7 +34,10 @@ export async function middleware(request: NextRequest) {
   const isProtected =
     path === "/" ||
     path.startsWith("/dashboard") ||
-    path.startsWith("/upload");
+    path.startsWith("/upload") ||
+    path.startsWith("/reviews") ||
+    path.startsWith("/photos") ||
+    path === "/rc-app";
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone();
