@@ -9,5 +9,5 @@ export default async function ReviewsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  return <ReviewChaserEmbed email={user.email ?? ""} />;
+  return <ReviewChaserEmbed />;
 }

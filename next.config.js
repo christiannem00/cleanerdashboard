@@ -11,11 +11,10 @@ const nextConfig = {
     return [
       { source: "/rc-app", destination: `${RC_ORIGIN}/dashboard` },
       { source: "/favicon.svg", destination: `${RC_ORIGIN}/favicon.svg` },
-      { source: "/api/dashboard-data", destination: `${RC_ORIGIN}/api/dashboard-data` },
-      { source: "/api/customer-action", destination: `${RC_ORIGIN}/api/customer-action` },
-      { source: "/api/campaign", destination: `${RC_ORIGIN}/api/campaign` },
-      { source: "/api/import-csv", destination: `${RC_ORIGIN}/api/import-csv` },
-      { source: "/api/login", destination: `${RC_ORIGIN}/api/login` },
+      // Wildcard: every ReviewChaser endpoint (current and future) proxies
+      // through. The portal's own /api/rc/* route handlers are filesystem
+      // routes, so they always win over this rewrite.
+      { source: "/api/:path*", destination: `${RC_ORIGIN}/api/:path*` },
     ];
   },
 };

@@ -35,9 +35,26 @@ export async function POST(request: Request) {
 
   try {
     // Idempotent: if an operator already exists for this email, sign into it.
-    const op =
-      (await rcOperatorByEmail(user.email)) ||
-      (await rcCreateOperator({ businessName, email: user.email, googleReviewUrl }));
+    let op = await rcOperatorByEmail(user.email);
+    if (!op) {
+      // Create through ReviewChaser's own /api/onboard so the welcome email and
+      // the admin signup alert fire exactly like a direct signup would.
+      const origin = process.env.RC_APP_ORIGIN || "https://reviewchaser.vercel.app";
+      const r = await fetch(`${origin}/api/onboard`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessName,
+          email: user.email,
+          googleReviewUrl,
+          elapsedMs: 60000, // server-to-server; satisfies the human-speed bot filter
+        }),
+        cache: "no-store",
+      });
+      if (r.ok) op = await rcOperatorByEmail(user.email);
+      // Fallback: direct insert (no emails) if onboard is unavailable.
+      if (!op) op = await rcCreateOperator({ businessName, email: user.email, googleReviewUrl });
+    }
 
     const res = NextResponse.json({ ok: true, business: op.business_name });
     res.cookies.set(RC_COOKIE, signRcSession(op.id), {

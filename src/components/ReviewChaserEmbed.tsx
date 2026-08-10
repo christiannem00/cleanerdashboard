@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 type Phase = "loading" | "ready" | "setup" | "error";
 
-export default function ReviewChaserEmbed({ email }: { email: string }) {
+export default function ReviewChaserEmbed() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -81,9 +81,7 @@ export default function ReviewChaserEmbed({ email }: { email: string }) {
         <div className="center" style={{ minHeight: "auto", paddingTop: 40 }}>
           <div className="card">
             <h1>Set up Review Chaser</h1>
-            <p className="sub">
-              One-time setup — your account is linked to {email}, no extra login needed.
-            </p>
+            <p className="sub">One-time setup.</p>
             <form onSubmit={createAccount}>
               <label className="field">
                 <span style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--muted)", marginBottom: 5 }}>
@@ -107,7 +105,7 @@ export default function ReviewChaserEmbed({ email }: { email: string }) {
                 />
               </label>
               <button className="btn" type="submit" disabled={saving || !businessName.trim()}>
-                {saving ? "Creating…" : "Create my Review Chaser account"}
+                {saving ? "Launching…" : "Launch ReviewChaser"}
               </button>
               {error && <div className="msg err">{error}</div>}
             </form>
