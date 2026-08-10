@@ -76,9 +76,27 @@ export default function PhotoManagement({
               <div>
                 <b>Download the Showcase app</b>
                 <p>
-                  Get Showcase from the App Store or Google Play on your phone and
-                  create your company&apos;s organization.
+                  Get Showcase on your phone and create your company&apos;s
+                  organization.
                 </p>
+                <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                  <a
+                    className="btn dark"
+                    href="https://apps.apple.com/us/app/showcase-before-after-photos/id6757687914"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                     App Store
+                  </a>
+                  <a
+                    className="btn dark"
+                    href="https://play.google.com/store/apps/details?id=com.vhc.showcase&hl=en_US"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    ▶ Google Play
+                  </a>
+                </div>
               </div>
             </div>
             <div className="step">

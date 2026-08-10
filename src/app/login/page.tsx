@@ -36,7 +36,7 @@ export default function LoginPage() {
           <div className="logo">S</div>
           <div>
             <h1 style={{ fontSize: 20 }}>Sergio</h1>
-            <p className="sub" style={{ margin: 0 }}>Cleaner performance dashboard</p>
+            <p className="sub" style={{ margin: 0 }}>Cleaner Dashboard · Review Chaser · Photos — one login</p>
           </div>
         </div>
         {sent ? (
