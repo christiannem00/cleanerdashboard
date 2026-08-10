@@ -72,7 +72,7 @@ export default function UploadPage() {
           <div className="logo">S</div>
           <div>
             <h1>Upload a BookingKoala export</h1>
-            <div className="sub">Providers (all-time) and/or Bookings export — parsed in your browser</div>
+            <div className="sub">BookingKoala Bookings Export</div>
           </div>
         </div>
         <Link className="btn ghost" href="/dashboard">← All uploads</Link>
@@ -95,6 +95,65 @@ export default function UploadPage() {
       </div>
 
       {err && <div className="msg err" style={{ maxWidth: 520 }}>{err}</div>}
+
+      {!data && (
+        <div className="steps" style={{ marginTop: 20 }}>
+          <div className="step">
+            <div className="stepnum">1</div>
+            <div style={{ flex: 1 }}>
+              <b>In BookingKoala, go to Bookings → Download CSV</b>
+              <p>From the left menu, open <b>Bookings</b> and pick <b>Download CSV</b> near the bottom.</p>
+              <div className="bkshot">
+                <div className="bkmenu">
+                  <div className="bkitem">Dashboard</div>
+                  <div className="bkitem on">📅 Bookings ›</div>
+                  <div className="bkitem">Customers</div>
+                  <div className="bkitem">Providers</div>
+                </div>
+                <div className="bksub">
+                  <div className="bksubh">Bookings</div>
+                  <div className="bksubi">Today&apos;s Bookings</div>
+                  <div className="bksubi">Job History</div>
+                  <div className="bksubi on">• Download CSV</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="step">
+            <div className="stepnum">2</div>
+            <div style={{ flex: 1 }}>
+              <b>Pick your date range</b>
+              <p>Use the calendar and choose <b>Last 30 Days</b> (or the period you want scored), then Apply.</p>
+              <div className="bkshot">
+                <div className="bkrange">
+                  <div className="bkfield">📆 07-11-2026 – 08-09-2026</div>
+                  <div className="bkpresets">
+                    <span>Last 7 Days</span>
+                    <span className="on">Last 30 Days</span>
+                    <span>Last 3 Months</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="step">
+            <div className="stepnum">3</div>
+            <div style={{ flex: 1 }}>
+              <b>Select all fields and export</b>
+              <p>Under Field(s), tick <b>Select all</b> — that includes the provider/team column the scoring needs — then hit <b>Export</b> and drop the downloaded CSV above.</p>
+              <div className="bkshot">
+                <div className="bkfields">
+                  <div className="bkcheck on">✓ Select all</div>
+                  <div className="bkcheck">✓ Client id</div>
+                  <div className="bkcheck">✓ Date</div>
+                  <div className="bkcheck">✓ Full name</div>
+                  <div className="bkexport">Export</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {data && (
         <>

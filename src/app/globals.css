@@ -184,6 +184,25 @@ footer { margin-top: 26px; font-size: 11.5px; color: var(--muted); text-align: c
 .step .field { margin: 10px 0 0; }
 .photoframe { border: none; width: 100%; min-height: calc(100vh - 200px); background: #fff; border-radius: 12px; box-shadow: var(--shadow); margin-top: 12px; }
 
+/* BookingKoala export walkthrough illustrations */
+.bkshot { display: flex; gap: 10px; margin-top: 10px; background: #f4f6fa; border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 12px; }
+.bkmenu { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+.bkitem { padding: 7px 10px; border-radius: 8px; color: #4b5563; background: #fff; }
+.bkitem.on { background: #4c5ef7; color: #fff; font-weight: 600; }
+.bksub { background: #4c5ef7; border-radius: 10px; padding: 10px 12px; color: #dbe0ff; min-width: 150px; }
+.bksubh { color: #fff; font-weight: 700; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,.35); padding-bottom: 5px; margin-bottom: 6px; }
+.bksubi { padding: 4px 0; }
+.bksubi.on { color: #fff; font-weight: 700; }
+.bkrange { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.bkfield { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; color: #374151; width: fit-content; }
+.bkpresets { display: flex; gap: 6px; flex-wrap: wrap; }
+.bkpresets span { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; color: #6b7280; }
+.bkpresets span.on { background: #e8ecfe; border-color: #4c5ef7; color: #2a3bd7; font-weight: 700; }
+.bkfields { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+.bkcheck { background: #fff; border: 1px solid var(--line); border-radius: 7px; padding: 6px 10px; color: #374151; width: fit-content; }
+.bkcheck.on { background: #4c5ef7; border-color: #4c5ef7; color: #fff; font-weight: 700; }
+.bkexport { background: #4c5ef7; color: #fff; font-weight: 700; border-radius: 8px; padding: 8px 22px; width: fit-content; margin-top: 6px; }
+
 @media (max-width: 860px) {
   .portal { flex-direction: column; }
   .side { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; padding: 10px 12px; gap: 10px; overflow-x: auto; }
