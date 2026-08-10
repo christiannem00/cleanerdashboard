@@ -120,9 +120,21 @@ export default function UploadPage() {
             <div className="stepnum">3</div>
             <div style={{ flex: 1 }}>
               <b>Select all fields and export</b>
-              <p>Under Field(s), tick <b>Select all</b> — that includes the provider/team column the scoring needs — then hit <b>Export</b> and drop the downloaded CSV above.</p>
+              <p>Under Field(s), tick <b>Select all</b> — that includes the provider/team column the scoring needs — then hit <b>Export</b>.</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className="bkimg" src="/bk-export/step3.png" alt="BookingKoala export: Select all fields, then Export" />
+            </div>
+          </div>
+          <div className="step">
+            <div className="stepnum">4</div>
+            <div style={{ flex: 1 }}>
+              <b>Also export your Providers list — this unlocks Churn %</b>
+              <p>
+                In BookingKoala go to <b>Providers → Export</b> and download the providers CSV.
+                It carries each cleaner&apos;s lifetime bookings and cancellations, which is what
+                the churn numbers are built from — without it, churn shows 0% for everyone.
+                Then <b>drop both files above together</b> (the drop zone takes multiple files).
+              </p>
             </div>
           </div>
         </div>
