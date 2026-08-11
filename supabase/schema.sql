@@ -100,6 +100,10 @@ alter table public.subscribers enable row level security;
 drop policy if exists "subscribers anon insert" on public.subscribers;
 create policy "subscribers anon insert" on public.subscribers
   for insert with check (true);
+-- Signed-in users can see their own waitlist rows (so joined state persists).
+drop policy if exists "subscribers self-select" on public.subscribers;
+create policy "subscribers self-select" on public.subscribers
+  for select using (auth.jwt() ->> 'email' = email);
 
 -- 7) photo_settings: the operator's Showcase-app share link for the Photo
 --    Management page. One row per user, own-row RLS.

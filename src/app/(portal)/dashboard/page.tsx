@@ -15,6 +15,14 @@ export default async function DashboardList() {
     .select("id, label, filename, period, created_at, data")
     .order("created_at", { ascending: false });
 
+  const { data: waitlistRows } = await supabase
+    .from("subscribers")
+    .select("id")
+    .eq("email", user.email ?? "")
+    .eq("source", "waitlist")
+    .limit(1);
+  const onWaitlist = Boolean(waitlistRows?.length);
+
   return (
     <div className="wrap">
       <header className="top">
@@ -56,7 +64,7 @@ export default async function DashboardList() {
         </div>
       )}
 
-      <WaitlistCta defaultEmail={user.email ?? ""} />
+      <WaitlistCta initialJoined={onWaitlist} />
     </div>
   );
 }

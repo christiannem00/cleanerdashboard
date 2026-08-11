@@ -1,22 +1,25 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
-export default function WaitlistCta({ defaultEmail }: { defaultEmail: string }) {
-  const [joined, setJoined] = useState(false);
+export default function WaitlistCta({ initialJoined = false }: { defaultEmail?: string; initialJoined?: boolean }) {
+  const [joined, setJoined] = useState(initialJoined);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function join() {
     setErr(null);
     setLoading(true);
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("subscribers")
-      .insert({ email: defaultEmail, source: "waitlist" });
-    setLoading(false);
-    if (error) setErr(error.message);
-    else setJoined(true);
+    try {
+      // Inserts into subscribers AND emails the admin; idempotent.
+      const r = await fetch("/api/waitlist", { method: "POST" });
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.error || "failed");
+      setJoined(true);
+    } catch (e) {
+      setErr("Could not join — try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
