@@ -16,7 +16,8 @@ export type Insight = {
     | "clean-team"
     | "overdue"
     | "discounts"
-    | "review-ask";
+    | "review-ask"
+    | "worst-cleaner";
   tone: "bad" | "good";
   // Big count-up number rendered in the hero. null → no animated figure.
   amount: number | null;
@@ -54,6 +55,34 @@ export function pickInsight(data: Dataset): InsightResult {
 
   // ---- Candidate insights, each with a "wow" weight; highest wins. ----
   const candidates: (Insight & { wow: number })[] = [];
+
+  // 0. WORST CLEANER — always the headline when the team has a weak link, so the
+  //    insight is consistent (never celebrates the top cleaner, never flips between
+  //    pages). Dominant wow so it wins whenever the worst cleaner has a real issue.
+  const worst = [...cleaners].sort((a, b) => a.score - b.score)[0];
+  const worstHasIssue =
+    worst &&
+    (worst.op_complaints > 0 || worst.credits > 0 || (hasChurn && worst.canc_rate >= 8) || worst.tier === "risk" || worst.tier === "watch");
+  if (worst && worstHasIssue && cleaners.length >= 2) {
+    const bits: string[] = [];
+    if (worst.op_complaints > 0) bits.push(`${worst.op_complaints} service complaint${worst.op_complaints > 1 ? "s" : ""}`);
+    if (hasChurn && worst.canc_rate >= 8) bits.push(`a ${pct1(worst.canc_rate)} cancellation rate`);
+    if (worst.credits > 0) bits.push(`${money(worst.credits)} in refunds & comps`);
+    const issue = bits.length ? bits.join(", ") : "the lowest performance score on your team";
+    const annualLeak = worst.credits > 0 ? annual(worst.credits) : null;
+    candidates.push({
+      id: "worst-cleaner",
+      tone: "bad",
+      amount: annualLeak,
+      amountPrefix: "$",
+      amountSuffix: "/yr",
+      eyebrow: "Sergio found your cleaner to watch",
+      headline: annualLeak != null ? `tied up in your weakest cleaner` : `${worst.name} is your cleaner to watch`,
+      detail: `${worst.name} ranks last of ${cleaners.length} cleaners — ${issue}. Worth a close look before it costs you clients.`,
+      cleaner: worst.name,
+      wow: 200,
+    });
+  }
 
   // A. Concentrated leak — one cleaner holds a big share of all money given back.
   if (teamCredits >= 40 && worstLeaker && worstLeaker.credits > 0) {
@@ -229,10 +258,15 @@ export function pickInsight(data: Dataset): InsightResult {
     });
   }
 
+  // Lead with a problem whenever one exists — never celebrate the top cleaner while
+  // something needs attention (keeps the headline consistent across pages).
+  const bad = candidates.filter((c) => c.tone === "bad");
+  const pool = bad.length ? bad : candidates;
+
   // Fallback — clean team, nothing alarming.
   let hero: Insight;
-  if (candidates.length) {
-    hero = candidates.sort((a, b) => b.wow - a.wow)[0];
+  if (pool.length) {
+    hero = pool.sort((a, b) => b.wow - a.wow)[0];
   } else if (topScorer) {
     hero = {
       id: "clean-team",
@@ -259,17 +293,18 @@ export function pickInsight(data: Dataset): InsightResult {
   }
 
   // ---- Supporting chips (always the same three, for a stable frame) ----
+  const worstScorer = [...cleaners].sort((a, b) => a.score - b.score)[0];
   const chips: Chip[] = [
     { label: "Given back this period", value: money(teamCredits), tone: teamCredits > 0 ? "bad" : "good" },
     {
-      label: "Top performer",
-      value: topScorer ? topScorer.name : "—",
-      tone: "good",
+      label: "Cleaner to watch",
+      value: worstScorer ? worstScorer.name : "—",
+      tone: "bad",
     },
     {
-      label: hasChurn ? "Cleaners to watch" : "Cleaners scored",
+      label: hasChurn ? "Cleaners at risk" : "Cleaners scored",
       value: String(hasChurn ? cleaners.filter((c) => c.tier === "watch" || c.tier === "risk").length : cleaners.length),
-      tone: hasChurn ? "neutral" : "neutral",
+      tone: "neutral",
     },
   ];
 
