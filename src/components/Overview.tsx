@@ -35,12 +35,29 @@ export default function Overview({ data }: { data: Dataset }) {
       {/* 1 — the headline aha */}
       <InsightCard data={data} />
 
-      {/* 2 — where the money goes (margin) */}
-      <div className="kpis" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        <div className="kpi"><div className="l">Revenue</div><div className="v">{money(t.revenue)}</div><div className="m">this period</div></div>
-        <div className="kpi"><div className="l">Labor paid</div><div className="v">{money(t.provider_pay)}</div><div className="m">to cleaners</div></div>
-        <div className="kpi"><div className="l">Gross margin</div><div className="v">{money(t.margin)}</div><div className="m">{t.margin_pct}% · before overhead</div></div>
-        <div className="kpi"><div className="l">Given away</div><div className="v">{money(t.discounts)}</div><div className="m">discounts</div></div>
+      {/* 2 — where the money goes (margin), shown as an equation */}
+      <div className="margineq">
+        <div className="meq-term">
+          <div className="l">Revenue</div>
+          <div className="v">{money(t.revenue)}</div>
+          <div className="m">this period</div>
+        </div>
+        <div className="meq-op">−</div>
+        <div className="meq-term">
+          <div className="l">Labor paid</div>
+          <div className="v">{money(t.provider_pay)}</div>
+          <div className="m">to cleaners</div>
+        </div>
+        <div className="meq-op">=</div>
+        <div className="meq-bubble">
+          <div className="l">Gross margin</div>
+          <div className="v">{money(t.margin)}</div>
+          <div className="m">{t.margin_pct}% · before overhead</div>
+        </div>
+      </div>
+      <div className="meq-aside">
+        <span className="dot" style={{ background: "var(--watch)" }} />
+        <b>{money(t.discounts)}</b> given away in discounts this period
       </div>
 
       <div className="ovcols">

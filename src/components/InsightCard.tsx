@@ -50,13 +50,20 @@ export default function InsightCard({ data, onSeeBreakdown }: { data: Dataset; o
       {figure ? (
         <div className="insight-hero">
           <span className="insight-figure">{figure}</span>
-          <span className="insight-head">{hero.headline}</span>
+          <span className="insight-head">
+            {hero.headline}
+            <sup className="insight-ast">*</sup>
+          </span>
         </div>
       ) : (
         <div className="insight-head solo">{hero.headline}</div>
       )}
 
       <p className="insight-detail">{hero.detail}</p>
+
+      {hero.amount != null && (
+        <p className="insight-foot">* Estimated from your uploaded sample — actual figures may vary.</p>
+      )}
 
       <div className="insight-chips">
         {chips.map((c) => (
