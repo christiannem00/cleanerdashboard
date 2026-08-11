@@ -302,15 +302,17 @@ footer { margin-top: 26px; font-size: 11.5px; color: var(--muted); text-align: c
 }
 
 /* ---- Overview (login-landing) dashboard ---- */
-.margineq { display: flex; align-items: stretch; gap: 10px; margin: 18px 0 10px; flex-wrap: wrap; }
-.meq-term, .meq-bubble { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow); flex: 1 1 0; min-width: 118px; }
-.meq-term .l, .meq-bubble .l { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; opacity: .85; }
-.meq-term .v, .meq-bubble .v { font-family: 'Space Mono', ui-monospace, monospace; font-size: 23px; font-weight: 700; margin-top: 5px; letter-spacing: -.6px; font-variant-numeric: tabular-nums; }
-.meq-term .m, .meq-bubble .m { font-size: 11px; margin-top: 2px; }
+.margineq { display: flex; align-items: stretch; gap: 8px; margin: 18px 0 10px; flex-wrap: wrap; }
+.meq-term, .meq-bubble { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; box-shadow: var(--shadow); flex: 1 1 0; min-width: 104px; }
+.meq-term .l, .meq-bubble .l { font-size: 9.5px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; opacity: .85; }
+.meq-term .v, .meq-bubble .v { font-family: 'Space Mono', ui-monospace, monospace; font-size: 21px; font-weight: 700; margin-top: 5px; letter-spacing: -.6px; font-variant-numeric: tabular-nums; }
+.meq-term .m, .meq-bubble .m { font-size: 10.5px; margin-top: 2px; }
 .meq-term .l, .meq-term .m { color: var(--muted); }
 .meq-disc { border-color: #f0dcae; background: linear-gradient(180deg, #fffaf0, #fff); }
 .meq-disc .v { color: var(--watch); }
-.meq-op { display: flex; align-items: center; font-size: 26px; font-weight: 700; color: var(--muted); flex: 0 0 auto; }
+.meq-appease { border-color: #f2cfcb; background: linear-gradient(180deg, #fff6f5, #fff); }
+.meq-appease .v { color: var(--risk); }
+.meq-op { display: flex; align-items: center; font-size: 22px; font-weight: 700; color: var(--muted); flex: 0 0 auto; }
 .meq-bubble { flex: 1.25 1 0; background: linear-gradient(135deg, var(--brand), var(--brand2)); border-color: var(--brand2); color: #fff; box-shadow: 0 6px 22px rgba(22,101,52,.28); }
 .meq-bubble .l { color: rgba(255,255,255,.85); }
 .meq-bubble .v { font-size: 27px; }

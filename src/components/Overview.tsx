@@ -17,6 +17,14 @@ export default function Overview({ data }: { data: Dataset }) {
   const pairs = data.pairs.filter((p) => p.jobs >= 1);
   const worstService = data.services[0]; // sorted worst-margin first
 
+  // Headline money flow. `t.margin` is charges − labor (charges = final amount, which is
+  // net of discounts but NOT of refunds/comps), so appeasements must still come out.
+  const collected = t.margin + t.provider_pay; // client charges after discounts
+  const billed = collected + t.discounts; // full price before discounts
+  const appeasements = t.credits; // refunds + comps handed back
+  const grossMargin = t.margin - appeasements; // what's actually left, before overhead
+  const marginPct = collected > 0 ? Math.round((100 * grossMargin) / collected) : 0;
+
   return (
     <div className="wrap">
       <header className="top">
@@ -36,12 +44,12 @@ export default function Overview({ data }: { data: Dataset }) {
       <InsightCard data={data} />
 
       {/* 2 — where the money goes, as a reconciling equation:
-           Billed (full price) − Discounts − Labor = Gross margin.
-           Billed is derived so the equation always balances (margin + labor + discounts). */}
+           Billed (full price) − Discounts − Appeasements − Labor = Gross margin.
+           Billed is derived so the equation always balances. */}
       <div className="margineq">
         <div className="meq-term">
           <div className="l">Billed</div>
-          <div className="v">{money(t.margin + t.provider_pay + t.discounts)}</div>
+          <div className="v">{money(billed)}</div>
           <div className="m">at full price</div>
         </div>
         <div className="meq-op">−</div>
@@ -49,6 +57,12 @@ export default function Overview({ data }: { data: Dataset }) {
           <div className="l">Discounts</div>
           <div className="v">{money(t.discounts)}</div>
           <div className="m">to clients</div>
+        </div>
+        <div className="meq-op">−</div>
+        <div className="meq-term meq-appease">
+          <div className="l">Appeasements</div>
+          <div className="v">{money(appeasements)}</div>
+          <div className="m">refunds + comps</div>
         </div>
         <div className="meq-op">−</div>
         <div className="meq-term">
@@ -59,8 +73,8 @@ export default function Overview({ data }: { data: Dataset }) {
         <div className="meq-op">=</div>
         <div className="meq-bubble">
           <div className="l">Gross margin</div>
-          <div className="v">{money(t.margin)}</div>
-          <div className="m">{t.margin_pct}% · before overhead</div>
+          <div className="v">{money(grossMargin)}</div>
+          <div className="m">{marginPct}% · before overhead</div>
         </div>
       </div>
 
