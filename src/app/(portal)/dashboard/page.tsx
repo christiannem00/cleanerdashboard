@@ -28,9 +28,6 @@ export default async function DashboardList() {
         <div className="topright">
           <span className="who">{user.email}</span>
           <Link className="btn" href="/upload">+ New upload</Link>
-          <form action="/auth/signout" method="post">
-            <button className="btn ghost" type="submit">Sign out</button>
-          </form>
         </div>
       </header>
 

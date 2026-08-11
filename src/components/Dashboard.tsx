@@ -29,6 +29,21 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
   }
   async function submitFeedback() {
     setFb((f) => ({ ...f, status: "saving" }));
+    if (fb.kind === "beta_request") {
+      // Logs to the feedback table AND emails the admin.
+      try {
+        const r = await fetch("/api/beta-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ context: fb.context, message: fb.message, uploadId: uploadId ?? null }),
+        });
+        const d = await r.json();
+        setFb((f) => ({ ...f, status: d.ok ? "ok" : "err" }));
+      } catch {
+        setFb((f) => ({ ...f, status: "err" }));
+      }
+      return;
+    }
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setFb((f) => ({ ...f, status: "err" })); return; }

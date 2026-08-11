@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 // The rest of the VHC tools suite — not live in the portal yet. Clicking a
 // grayed-out entry opens an info modal with a "Request to join beta" button;
@@ -37,26 +36,24 @@ export default function BetaTools() {
   async function requestBeta(toolId: string, toolName: string) {
     setSending(true);
     setError("");
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setError("Please sign in again.");
-      setSending(false);
-      return;
-    }
-    const { error: dbError } = await supabase.from("feedback").insert({
-      user_id: user.id,
-      email: user.email,
-      kind: "beta_request",
-      context: `portal-tool:${toolId}`,
-      message: `Requested beta access to ${toolName} from the Sergio Lite portal`,
-    });
-    setSending(false);
-    if (dbError) {
+    try {
+      // Logs to the feedback table AND emails the admin.
+      const r = await fetch("/api/beta-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          context: `portal-tool:${toolId}`,
+          message: `Requested beta access to ${toolName} from the Sergio Lite portal`,
+        }),
+      });
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.error || "failed");
+      setRequested((prev) => ({ ...prev, [toolId]: true }));
+    } catch {
       setError("Could not send your request — try again.");
-      return;
+    } finally {
+      setSending(false);
     }
-    setRequested((r) => ({ ...r, [toolId]: true }));
   }
 
   return (
