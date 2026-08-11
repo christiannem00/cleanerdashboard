@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import BetaTools from "@/components/BetaTools";
 
 const NAV = [
+  { href: "/overview", label: "Overview", icon: "🏠" },
   { href: "/dashboard", label: "Cleaner Dashboard", icon: "📊" },
   { href: "/reviews", label: "Review Chaser", icon: "⭐" },
   { href: "/photos", label: "Photo Management", icon: "📷" },
@@ -14,7 +15,7 @@ export default function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
   return (
     <aside className="side">
-      <Link href="/dashboard" className="sidebrand">
+      <Link href="/overview" className="sidebrand">
         <div className="logo">S</div>
         <div>
           <b>Sergio Lite</b>

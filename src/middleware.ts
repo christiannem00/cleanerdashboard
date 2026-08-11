@@ -37,6 +37,7 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = path === "/login";
   const isProtected =
     path === "/" ||
+    path.startsWith("/overview") ||
     path.startsWith("/dashboard") ||
     path.startsWith("/upload") ||
     path.startsWith("/reviews") ||
@@ -52,7 +53,7 @@ export async function middleware(request: NextRequest) {
   }
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/overview";
     return NextResponse.redirect(url);
   }
 

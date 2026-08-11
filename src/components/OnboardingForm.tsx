@@ -53,7 +53,7 @@ export default function OnboardingForm({ userId }: { userId: string }) {
       setError("Could not save — try again.");
       return;
     }
-    router.push("/dashboard");
+    router.push("/overview");
     router.refresh();
   }
 

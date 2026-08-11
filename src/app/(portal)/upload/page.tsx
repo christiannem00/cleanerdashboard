@@ -79,7 +79,7 @@ function UploadInner() {
       .single();
     setSaving(false);
     if (error) { setErr(error.message); return; }
-    router.push(`/dashboard/${row!.id}`);
+    router.push("/overview");
   }
 
   return (

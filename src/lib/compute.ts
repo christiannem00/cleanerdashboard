@@ -26,9 +26,33 @@ export type Cleaner = {
   op_complaints: number; // REAL complaints attributed to this cleaner (was seeded)
   complaint_per_clean: number;
   avg_rating: number | null; // provider "Average" from the providers export
+  provider_pay: number; // total paid to this cleaner (labor out)
+  margin: number; // revenue − labor for their jobs
+  labor_pct: number; // labor as % of the revenue they generated
   score: number;
   tier: "star" | "solid" | "watch" | "risk";
   rank: number;
+};
+
+// Margin by service type — the slice that shows deep/move cleans bleeding.
+export type ServiceRow = {
+  service: string;
+  jobs: number;
+  revenue: number;
+  provider_pay: number;
+  margin: number;
+  margin_pct: number;
+  labor_pct: number;
+  avg_ticket: number;
+};
+
+// Complaint/margin rate by two-person team — "who shouldn't be paired."
+export type PairRow = {
+  pair: string;
+  jobs: number;
+  complaints: number;
+  complaint_rate: number; // % of the pair's jobs with a complaint
+  margin_pct: number;
 };
 
 // Per-customer rollup. Carries contact fields so Review Chaser can target
@@ -57,6 +81,7 @@ export type ClientRow = {
   had_complaint: boolean;
   review_ask: boolean; // happy + no complaint → good to ask for a review
   suppress: boolean; // complaint/refund/low rating → do NOT ask
+  reactivation: boolean; // one-time client, no complaint → win back with a coupon
 };
 
 export type BookingRow = {
@@ -68,6 +93,8 @@ export type BookingRow = {
   service: string;
   neighborhood: string;
   final: number;
+  provider_pay: number;
+  margin: number;
   refund: number;
   price_adj: number;
   adj_comment: string;
@@ -92,7 +119,11 @@ export type Totals = {
   discounts: number; // total given away this window
   overdue_clients: number;
   review_targets: number;
+  reactivation_targets: number;
   window_days: number; // span of the export, for honest annualization
+  provider_pay: number; // total labor out
+  margin: number; // revenue − labor (gross, before overhead)
+  margin_pct: number;
 };
 
 export type Dataset = {
@@ -100,6 +131,8 @@ export type Dataset = {
   cleaners: Cleaner[];
   clients: ClientRow[];
   bookings: BookingRow[];
+  services: ServiceRow[];
+  pairs: PairRow[];
 };
 
 export type ParsedFile = { name: string; text: string };
@@ -224,6 +257,7 @@ export function computeDataset(files: ParsedFile[]): Dataset {
     name: string;
     jobs: number;
     revenue: number;
+    pay: number;
     refunds: number;
     refund_ct: number;
     comps: number;
@@ -234,6 +268,11 @@ export function computeDataset(files: ParsedFile[]): Dataset {
     first: Date | null;
   };
   const agg: Record<string, Agg> = {};
+
+  type SAgg = { service: string; jobs: number; revenue: number; pay: number; complaints: number };
+  const sagg: Record<string, SAgg> = {};
+  type PAgg = { pair: string; jobs: number; revenue: number; pay: number; complaints: number };
+  const pagg: Record<string, PAgg> = {};
 
   type CAgg = {
     id: string;
@@ -266,6 +305,9 @@ export function computeDataset(files: ParsedFile[]): Dataset {
       .filter(Boolean);
     const dt = pdt(r["Date"]);
     const final = N(r["Final amount (USD)"]);
+    const pay = N(r["Provider/team payment (USD)"] || r["Provider payment (summary) (USD)"]);
+    const margin = final - pay;
+    const service = r["Service"] || "—";
     const refund = N(r["Refunded amount (USD)"]);
     const adj = N(r["Price adjustment"]);
     const adjComment = r["Price adjustment comment"] || "";
@@ -286,6 +328,8 @@ export function computeDataset(files: ParsedFile[]): Dataset {
       service: r["Service"] || "",
       neighborhood,
       final: Math.round(final * 100) / 100,
+      provider_pay: Math.round(pay * 100) / 100,
+      margin: Math.round(margin * 100) / 100,
       refund: Math.round(refund * 100) / 100,
       price_adj: adj,
       adj_comment: adjComment,
@@ -336,9 +380,27 @@ export function computeDataset(files: ParsedFile[]): Dataset {
       c.neighborhood = neighborhood || c.neighborhood;
     }
 
+    // ---- Service-type aggregation (margin by service) ----
+    const s = sagg[service] || (sagg[service] = { service, jobs: 0, revenue: 0, pay: 0, complaints: 0 });
+    s.jobs++;
+    s.revenue += final;
+    s.pay += pay;
+    if (complaintEvent) s.complaints++;
+
     // ---- Cleaner aggregation (split shared jobs evenly) ----
     if (!names.length) return;
     const k = names.length;
+
+    // ---- Pair aggregation (only when 2+ cleaners share the job) ----
+    if (names.length >= 2) {
+      const key = [...names].sort().join(" + ");
+      const pr = pagg[key] || (pagg[key] = { pair: key, jobs: 0, revenue: 0, pay: 0, complaints: 0 });
+      pr.jobs++;
+      pr.revenue += final;
+      pr.pay += pay;
+      if (complaintEvent) pr.complaints++;
+    }
+
     names.forEach((n) => {
       const a =
         agg[n] ||
@@ -346,6 +408,7 @@ export function computeDataset(files: ParsedFile[]): Dataset {
           name: n,
           jobs: 0,
           revenue: 0,
+          pay: 0,
           refunds: 0,
           refund_ct: 0,
           comps: 0,
@@ -357,6 +420,7 @@ export function computeDataset(files: ParsedFile[]): Dataset {
         });
       a.jobs++;
       a.revenue += final / k;
+      a.pay += pay / k;
       a.refunds += refund;
       if (refund > 0) a.refund_ct++;
       if (adj < 0) {
@@ -408,6 +472,9 @@ export function computeDataset(files: ParsedFile[]): Dataset {
         op_complaints: a.complaints,
         complaint_per_clean: Math.round((1000 * a.complaints) / a.jobs) / 1000,
         avg_rating: avg > 0 ? avg : null,
+        provider_pay: Math.round(a.pay),
+        margin: Math.round(a.revenue - a.pay),
+        labor_pct: a.revenue > 0 ? Math.round((100 * a.pay) / a.revenue) : 0,
       } as Cleaner;
     });
 
@@ -443,6 +510,8 @@ export function computeDataset(files: ParsedFile[]): Dataset {
     const suppress = c.complaints > 0 || c.refunds > 0 || (c.last_rating != null && c.last_rating <= 3);
     // Ask happy clients: a 4–5★ somewhere, at least one clean, and nothing gone wrong.
     const review_ask = !suppress && (c.best_rating ?? 0) >= 4 && c.jobs >= 1;
+    // Reactivation: one-time clients who never went recurring — win back with a coupon.
+    const reactivation = c.occurrence !== "recurring" && !suppress && daysSince >= 14;
     return {
       id: c.id,
       name: c.name,
@@ -467,9 +536,41 @@ export function computeDataset(files: ParsedFile[]): Dataset {
       had_complaint: c.complaints > 0,
       review_ask,
       suppress,
+      reactivation,
     };
   });
   clients.sort((a, b) => b.spend - a.spend);
+
+  // ---- Margin by service type ----
+  const services: ServiceRow[] = Object.values(sagg)
+    .map((s) => {
+      const margin = s.revenue - s.pay;
+      return {
+        service: s.service,
+        jobs: s.jobs,
+        revenue: Math.round(s.revenue),
+        provider_pay: Math.round(s.pay),
+        margin: Math.round(margin),
+        margin_pct: s.revenue > 0 ? Math.round((100 * margin) / s.revenue) : 0,
+        labor_pct: s.revenue > 0 ? Math.round((100 * s.pay) / s.revenue) : 0,
+        avg_ticket: s.jobs ? Math.round(s.revenue / s.jobs) : 0,
+      };
+    })
+    .sort((a, b) => a.margin_pct - b.margin_pct); // worst margin first
+
+  // ---- Complaint/margin rate by two-person pairing ----
+  const pairs: PairRow[] = Object.values(pagg)
+    .map((p) => {
+      const margin = p.revenue - p.pay;
+      return {
+        pair: p.pair,
+        jobs: p.jobs,
+        complaints: p.complaints,
+        complaint_rate: p.jobs ? Math.round((100 * p.complaints) / p.jobs) : 0,
+        margin_pct: p.revenue > 0 ? Math.round((100 * margin) / p.revenue) : 0,
+      };
+    })
+    .sort((a, b) => b.complaint_rate - a.complaint_rate || b.jobs - a.jobs);
 
   const bookDates = bookings.map((b) => b.date).filter(Boolean).sort();
   const windowDays =
@@ -494,8 +595,16 @@ export function computeDataset(files: ParsedFile[]): Dataset {
     discounts: Math.round(discounts),
     overdue_clients: clients.filter((c) => c.overdue).length,
     review_targets: clients.filter((c) => c.review_ask).length,
+    reactivation_targets: clients.filter((c) => c.reactivation).length,
     window_days: windowDays,
+    provider_pay: Math.round(bookings.reduce((s, b) => s + b.provider_pay, 0)),
+    margin: Math.round(bookings.reduce((s, b) => s + b.margin, 0)),
+    margin_pct: (() => {
+      const rev = bookings.reduce((s, b) => s + b.final, 0);
+      const pay = bookings.reduce((s, b) => s + b.provider_pay, 0);
+      return rev > 0 ? Math.round((100 * (rev - pay)) / rev) : 0;
+    })(),
   };
 
-  return { totals, cleaners: cleanerList, clients, bookings };
+  return { totals, cleaners: cleanerList, clients, bookings, services, pairs };
 }

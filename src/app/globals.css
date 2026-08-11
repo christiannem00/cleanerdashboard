@@ -298,3 +298,23 @@ footer { margin-top: 26px; font-size: 11.5px; color: var(--muted); text-align: c
   .insight-head { font-size: 17px; }
   .insight-chip { flex: 1; min-width: 0; }
 }
+
+/* ---- Overview (login-landing) dashboard ---- */
+.ovcols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+.ovlists { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
+.panel h2 { justify-content: space-between; }
+.countpill { font-size: 12px; font-weight: 700; color: var(--brand2); background: #e7f2ea; border: 1px solid #cbe5d3; padding: 2px 9px; border-radius: 999px; }
+.actionlist .actionrows { max-height: 380px; overflow-y: auto; }
+.actionrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.actionrow:last-child { border-bottom: none; }
+.ar-main { min-width: 0; }
+.ar-main b { font-size: 13.5px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ar-main small { color: var(--muted); font-size: 11.5px; }
+.btn.sm { padding: 6px 10px; font-size: 12px; white-space: nowrap; flex: none; }
+.btn.ghost { background: #fff; color: var(--brand); border: 1px solid var(--line); }
+.btn.ghost:hover { border-color: var(--brand); }
+
+@media (max-width: 920px) {
+  .ovcols { grid-template-columns: 1fr; }
+  .ovlists { grid-template-columns: 1fr; }
+}
