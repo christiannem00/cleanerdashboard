@@ -301,6 +301,25 @@ footer { margin-top: 26px; font-size: 11.5px; color: var(--muted); text-align: c
   .insight-chip { flex: 1; min-width: 0; }
 }
 
+/* ---- Review Chaser first-run picker ---- */
+.rcpick { max-width: 640px; }
+.rcpick-head h2 { font-size: 18px; margin: 8px 0 6px; }
+.rcpick-actions { display: flex; align-items: center; gap: 10px; margin: 12px 0 6px; }
+.rcpick-count { margin-left: auto; font-size: 12.5px; font-weight: 700; color: var(--brand2); background: #e7f2ea; border: 1px solid #cbe5d3; padding: 3px 11px; border-radius: 999px; }
+.rcpick-list { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); box-shadow: var(--shadow); max-height: 460px; overflow-y: auto; }
+.rcpick-row { display: flex; align-items: center; gap: 12px; padding: 11px 15px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.rcpick-row:last-child { border-bottom: none; }
+.rcpick-row:hover { background: #fbfcfd; }
+.rcpick-row.sup { opacity: .72; }
+.rcpick-row input { width: 17px; height: 17px; flex: none; accent-color: var(--brand); }
+.rcpick-main { min-width: 0; flex: 1; }
+.rcpick-main b { font-size: 13.5px; display: block; }
+.rcpick-main small { color: var(--muted); font-size: 11.5px; }
+.rcpick-tag { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.rcpick-tag.good { background: var(--starbg); color: var(--star); }
+.rcpick-tag.bad { background: var(--riskbg); color: var(--risk); }
+.rcpick-foot { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
+
 /* ---- Urgent alerts feed (top of dashboard) ---- */
 .alerts-wrap { margin: 16px 0 10px; }
 .alerts-header { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 800; letter-spacing: -.2px; color: var(--ink); }

@@ -49,7 +49,7 @@ function UploadInner() {
         const ds = computeDataset(files);
         setData(ds);
         // Persist immediately so the report survives navigation — no manual save.
-        void persist(ds, files.map((x) => x.name).join(", "), nextBookings.text);
+        void persist(ds, files.map((x) => x.name).join(", "));
       } catch (e) {
         setData(null);
         setErr(e instanceof ComputeError ? e.message : "Could not parse this file.");
@@ -59,7 +59,8 @@ function UploadInner() {
   }
 
   // Insert on first parse, update the same row when the providers file is added.
-  async function persist(ds: Dataset, filename: string, rawCsv: string) {
+  // Review Chaser is populated separately, with consent, via the picker on /reviews.
+  async function persist(ds: Dataset, filename: string) {
     setSaving(true);
     setSaved(false);
     setErr(null);
@@ -74,7 +75,6 @@ function UploadInner() {
       setSaving(false);
       if (error) { setErr(error.message); return; }
       setSaved(true);
-      void syncReviewChaser(ds, rawCsv);
       return;
     }
     // Auto-name the upload with the current date & time — no prompt needed.
@@ -90,26 +90,6 @@ function UploadInner() {
     if (error) { setErr(error.message); return; }
     uploadId.current = row!.id;
     setSaved(true);
-    void syncReviewChaser(ds, rawCsv);
-  }
-
-  // Best-effort: hand the same export to Review Chaser so its campaign is populated
-  // from onboarding — no separate upload there. We only chase happy, non-complaint jobs.
-  async function syncReviewChaser(ds: Dataset, rawCsv: string) {
-    try {
-      const suppressed = new Set(ds.clients.filter((c) => c.suppress).map((c) => c.id));
-      const refs = ds.bookings
-        .filter((b) => !b.is_complaint && b.client_id && !suppressed.has(b.client_id))
-        .map((b) => b.id)
-        .filter(Boolean);
-      await fetch("/api/rc/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv: rawCsv, refs }),
-      });
-    } catch {
-      /* non-blocking — Review Chaser sync is best-effort */
-    }
   }
 
   return (

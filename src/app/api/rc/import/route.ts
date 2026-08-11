@@ -19,17 +19,31 @@ export async function POST(req: Request) {
   if (!user?.email) return NextResponse.json({ error: "not signed in" }, { status: 401 });
   if (!rcConfigured()) return NextResponse.json({ skipped: "rc not configured" });
 
-  let body: { csv?: string; refs?: unknown };
+  type Contact = { ref?: string; name?: string; email?: string; phone?: string; date?: string };
+  let body: { csv?: string; refs?: unknown; contacts?: Contact[] };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
   }
-  const csv = typeof body.csv === "string" ? body.csv : "";
+
+  // Two entry points: a raw CSV (from the upload flow) or a structured contact
+  // list picked in the Review Chaser prompt. For contacts we synthesize the CSV
+  // ReviewChaser's importer expects, so all the dedup/scheduling logic is reused.
+  let csv = typeof body.csv === "string" ? body.csv : "";
+  let only = Array.isArray(body.refs) ? body.refs.slice(0, 5000).map((x) => String(x)).filter(Boolean) : undefined;
+
+  if (!csv && Array.isArray(body.contacts) && body.contacts.length) {
+    const cell = (s: unknown) => `"${String(s ?? "").replace(/"/g, '""')}"`;
+    const picked = body.contacts.slice(0, 5000).filter((c) => c.ref && c.phone);
+    const header = ["Booking id", "Date", "Full name", "Email", "Phone", "Booking status"];
+    const lines = [header.join(",")];
+    for (const c of picked) lines.push([c.ref, c.date || "", c.name || "", c.email || "", c.phone, "completed"].map(cell).join(","));
+    csv = lines.join("\n");
+    only = picked.map((c) => String(c.ref));
+  }
+
   if (!csv.trim()) return NextResponse.json({ error: "no csv" }, { status: 400 });
-  const only = Array.isArray(body.refs)
-    ? body.refs.slice(0, 5000).map((x) => String(x)).filter(Boolean)
-    : undefined;
 
   try {
     // Map to the ReviewChaser operator, creating one on first sync.
