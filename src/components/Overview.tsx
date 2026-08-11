@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import InsightCard from "@/components/InsightCard";
+import AlertsPanel from "@/components/AlertsPanel";
 import CopyButton from "@/components/CopyButton";
 import type { Dataset } from "@/lib/compute";
 
@@ -40,8 +40,8 @@ export default function Overview({ data }: { data: Dataset }) {
         </div>
       </header>
 
-      {/* 1 — the headline aha */}
-      <InsightCard data={data} />
+      {/* 1 — urgent alerts feed */}
+      <AlertsPanel data={data} />
 
       {/* 2 — where the money goes, as a reconciling equation:
            Billed (full price) − Discounts − Appeasements − Labor = Gross margin.

@@ -69,6 +69,7 @@ export type ClientRow = {
   cadence_days: number | null;
   jobs: number;
   spend: number;
+  owed: number; // outstanding balance on completed jobs (unpaid)
   first: string; // ISO date
   last: string; // ISO date
   days_since_last: number;
@@ -117,6 +118,8 @@ export type Totals = {
   recurring_share: number;
   clients: number;
   discounts: number; // total given away this window
+  unpaid_total: number; // outstanding balances across completed jobs
+  unpaid_clients: number; // how many clients still owe
   overdue_clients: number;
   review_targets: number;
   reactivation_targets: number;
@@ -285,6 +288,7 @@ export function computeDataset(files: ParsedFile[]): Dataset {
     occurrence: string;
     jobs: number;
     spend: number;
+    owed: number;
     first: Date | null;
     last: Date | null;
     best_rating: number | null;
@@ -316,6 +320,7 @@ export function computeDataset(files: ParsedFile[]): Dataset {
     const occurrence = r["Occurrence"] || "";
     const neighborhood = r["Location"] || r["City"] || "";
     const discount = N(r["Discount amount (USD)"]);
+    const owed = N(r["Amount owed by customer (USD)"]);
     const complaintEvent = isComplaint(refund, adj, adjComment, rate);
     discounts += discount;
 
@@ -355,6 +360,7 @@ export function computeDataset(files: ParsedFile[]): Dataset {
         occurrence,
         jobs: 0,
         spend: 0,
+        owed: 0,
         first: null,
         last: null,
         best_rating: null,
@@ -366,6 +372,7 @@ export function computeDataset(files: ParsedFile[]): Dataset {
       });
     c.jobs++;
     c.spend += final;
+    c.owed += owed;
     c.refunds += refund;
     if (adj < 0) c.comps += -adj;
     if (complaintEvent) c.complaints++;
@@ -524,6 +531,7 @@ export function computeDataset(files: ParsedFile[]): Dataset {
       cadence_days: cad,
       jobs: c.jobs,
       spend: Math.round(c.spend),
+      owed: Math.round(c.owed * 100) / 100,
       first: iso(c.first),
       last: iso(c.last),
       days_since_last: daysSince,
@@ -593,6 +601,8 @@ export function computeDataset(files: ParsedFile[]): Dataset {
     ),
     clients: clients.length,
     discounts: Math.round(discounts),
+    unpaid_total: Math.round(clients.reduce((s, c) => s + c.owed, 0)),
+    unpaid_clients: clients.filter((c) => c.owed > 0).length,
     overdue_clients: clients.filter((c) => c.overdue).length,
     review_targets: clients.filter((c) => c.review_ask).length,
     reactivation_targets: clients.filter((c) => c.reactivation).length,

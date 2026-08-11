@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { computeDataset, ComputeError, type Dataset, type ParsedFile } from "@/lib/compute";
-import InsightCard from "@/components/InsightCard";
+import AlertsPanel from "@/components/AlertsPanel";
 
 export default function UploadPage() {
   return (
@@ -218,7 +218,7 @@ function UploadInner() {
 
       {data && (
         <>
-          <InsightCard data={data} />
+          <AlertsPanel data={data} />
 
           <div className="kpis">
             <div className="kpi"><div className="l">Cleaners</div><div className="v">{data.totals.cleaners}</div><div className="m">{data.totals.active_cleaners} active</div></div>
