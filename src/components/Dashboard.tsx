@@ -135,7 +135,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
                 {sorted.map((c) => (
                   <tr key={c.name} data-cleaner={c.name}>
                     <td><span className="rk">{c.rank}</span></td>
-                    <td className="name l">{c.name}{c.is_new && <span className="newb">new</span>}<small>{c.clients} clients{c.Status === "Inactive" ? " · left the team" : ""}</small></td>
+                    <td className="name l">{c.name}<small>{c.clients} clients{c.Status === "Inactive" ? " · left the team" : ""}</small></td>
                     <td>{c.jobs}</td>
                     <td>{money(c.rev_mo)}</td>
                     <td className={c.canc_rate > 7 ? "warn" : ""}>{pct1(c.canc_rate)}</td>
@@ -147,7 +147,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
               </tbody>
             </table>
           </div>
-          <div className="section-note">Score = 40% complaints-per-clean (limited beta) · 25% churn (cancellations) · 25% refunds+comps per job · 10% recurring retention.<br /><span style={{ color: "#9aa1ab" }}>*Churn = lifetime cancelled ÷ total bookings (a cancellation proxy until the paused/cancelled recurring export is loaded).</span></div>
+          <div className="section-note">Score = 40% complaints-per-clean (restricted to limited beta) · 25% churn (cancellations) · 25% refunds+comps per job · 10% recurring retention.<br /><span style={{ color: "#9aa1ab" }}>*Churn = lifetime cancelled ÷ total bookings (a cancellation proxy until the paused/cancelled recurring export is loaded).</span></div>
         </div>
       )}
 
