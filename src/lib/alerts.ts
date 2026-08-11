@@ -76,8 +76,8 @@ export function buildAlerts(data: Dataset): AlertsResult {
     });
   }
 
-  // Urgent-item count for the header (all issues, not just the ones summarized above).
-  const count = t.unpaid_clients + t.total_complaints + t.overdue_clients;
+  // Urgent-item count (older uploads may lack some fields — coalesce to avoid NaN).
+  const count = (t.unpaid_clients || 0) + (t.total_complaints || 0) + (t.overdue_clients || 0);
 
   if (!alerts.length) {
     const top = [...data.cleaners].sort((a, b) => b.score - a.score)[0];

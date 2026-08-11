@@ -7,8 +7,9 @@ const money = (n: number) => "$" + Math.round(n || 0).toLocaleString("en-US");
 // The top-of-dashboard alerts feed: a headline count of what needs attention,
 // then dollar-forward cards that each say why it matters and what to do.
 export default function AlertsPanel({ data }: { data: Dataset }) {
-  const { count, alerts } = buildAlerts(data);
-  const clean = count === 0;
+  const { alerts } = buildAlerts(data);
+  // Robust "all clear" check — never depends on a count that older uploads may lack.
+  const clean = alerts.length === 1 && alerts[0].id === "clear";
 
   return (
     <section className="alerts-wrap" data-section="Urgent alerts">
@@ -17,7 +18,7 @@ export default function AlertsPanel({ data }: { data: Dataset }) {
         {clean ? (
           <span>Sergio found <b>no urgent alerts</b> — your business is running clean</span>
         ) : (
-          <span>Sergio found <b>{count}</b> urgent alert{count === 1 ? "" : "s"} for your business</span>
+          <span>Sergio found <b>urgent alerts</b> for your business</span>
         )}
       </div>
 
