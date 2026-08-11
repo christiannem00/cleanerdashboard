@@ -30,7 +30,11 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isAuthPage = path === "/login" || path.startsWith("/auth");
+  // Only the login page bounces already-signed-in users to the dashboard.
+  // The /auth/* routes (callback, signout) must run their handlers — treating
+  // them as "auth pages" here would redirect the sign-out POST away before it
+  // could clear the session.
+  const isAuthPage = path === "/login";
   const isProtected =
     path === "/" ||
     path.startsWith("/dashboard") ||
