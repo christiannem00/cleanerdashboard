@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import { createHmac } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,10 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return NextResponse.json({ error: "not signed in" }, { status: 401 });
 
-  const { data: existing } = await supabase
+  // `subscribers` is insert-only under RLS — read/check with the service-role
+  // client so the idempotency check works (otherwise every click re-inserts).
+  const admin = createAdminClient();
+  const { data: existing } = await admin
     .from("subscribers")
     .select("id")
     .eq("email", user.email)
@@ -19,7 +23,7 @@ export async function POST() {
     .limit(1);
 
   if (!existing?.length) {
-    const { error: dbError } = await supabase
+    const { error: dbError } = await admin
       .from("subscribers")
       .insert({ email: user.email, source: "waitlist" });
     if (dbError) {
