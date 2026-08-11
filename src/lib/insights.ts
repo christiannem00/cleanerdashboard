@@ -7,7 +7,16 @@ import type { Dataset, Cleaner } from "./compute";
 export type Chip = { label: string; value: string; tone: "good" | "bad" | "neutral" };
 
 export type Insight = {
-  id: "leak" | "expensive-earner" | "churn" | "team-leak" | "quiet-star" | "clean-team";
+  id:
+    | "leak"
+    | "expensive-earner"
+    | "churn"
+    | "team-leak"
+    | "quiet-star"
+    | "clean-team"
+    | "overdue"
+    | "discounts"
+    | "review-ask";
   tone: "bad" | "good";
   // Big count-up number rendered in the hero. null → no animated figure.
   amount: number | null;
@@ -24,13 +33,10 @@ export type InsightResult = { hero: Insight; chips: Chip[] };
 const money = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
 const pct1 = (n: number) => (n || 0).toFixed(1) + "%";
 
-// Scale a period total into a monthly run-rate using the same 30-day
-// normalization compute.ts already applied to revenue, then annualize.
+// Annualize a period total off the actual span of the export (honest run-rate).
 function annualizer(data: Dataset) {
-  const rev = data.cleaners.reduce((s, c) => s + c.revenue, 0);
-  const revMo = data.cleaners.reduce((s, c) => s + c.rev_mo, 0);
-  const factor = rev > 0 ? revMo / rev : 1;
-  return (periodTotal: number) => periodTotal * factor * 12;
+  const wd = data.totals.window_days || 30;
+  return (periodTotal: number) => periodTotal * (365 / wd);
 }
 
 export function pickInsight(data: Dataset): InsightResult {
@@ -152,6 +158,74 @@ export function pickInsight(data: Dataset): InsightResult {
       }. This is who you build the team around.`,
       cleaner: quietStar.name,
       wow: 25,
+    });
+  }
+
+  // F. Overdue recurring clients — revenue quietly walking out the door. Most
+  //    actionable card there is: a named call list.
+  const overdue = data.clients.filter((c) => c.overdue).sort((a, b) => b.spend - a.spend);
+  if (overdue.length) {
+    // Monthly revenue at risk = per-visit ticket × visits/month, summed.
+    const atRiskMo = overdue.reduce((s, c) => {
+      const ticket = c.jobs ? c.spend / c.jobs : 0;
+      const perMo = c.cadence_days ? 30 / c.cadence_days : 1;
+      return s + ticket * perMo;
+    }, 0);
+    const names = overdue.slice(0, 3).map((c) => c.name).join(", ");
+    candidates.push({
+      id: "overdue",
+      tone: "bad",
+      amount: atRiskMo > 0 ? atRiskMo * 12 : null,
+      amountPrefix: "$",
+      amountSuffix: "/yr",
+      eyebrow: "Sergio found recurring clients slipping away",
+      headline: `${overdue.length} regular${overdue.length > 1 ? "s are" : " is"} overdue for a visit`,
+      detail: `${names}${overdue.length > 3 ? ` +${overdue.length - 3} more` : ""} ${
+        overdue.length > 1 ? "haven't" : "hasn't"
+      } been back on schedule. That's about ${money(atRiskMo * 12)}/yr of recurring revenue to win back with one round of calls.`,
+      wow: 52 + overdue.length * 3,
+    });
+  }
+
+  // G. Discount leakage — the number operators never total up.
+  if (data.totals.discounts >= 150) {
+    const annualDisc = annual(data.totals.discounts);
+    candidates.push({
+      id: "discounts",
+      tone: "bad",
+      amount: annualDisc,
+      amountPrefix: "$",
+      amountSuffix: "/yr",
+      eyebrow: "Sergio added up your discounts",
+      headline: `going out the door in plan discounts`,
+      detail: `Across ${cleaners.length ? data.totals.clients : 0} clients you gave back ${money(
+        data.totals.discounts,
+      )} in recurring-plan and code discounts this period — about ${money(
+        annualDisc,
+      )} a year. Worth knowing which plans still pay off.`,
+      wow: 34 + Math.min(annualDisc / 1500, 22),
+    });
+  }
+
+  // H. Review targets — happy clients you haven't asked. Positive + actionable.
+  if (data.totals.review_targets >= 1) {
+    const names = data.clients
+      .filter((c) => c.review_ask)
+      .slice(0, 3)
+      .map((c) => c.name)
+      .join(", ");
+    candidates.push({
+      id: "review-ask",
+      tone: "good",
+      amount: null,
+      amountPrefix: "",
+      amountSuffix: "",
+      eyebrow: "Sergio found reviews waiting to happen",
+      headline: `${data.totals.review_targets} happy client${
+        data.totals.review_targets > 1 ? "s" : ""
+      } you haven't asked to review you`,
+      detail: `${names}${data.totals.review_targets > 3 ? " and others" : ""} rated your team 5★ — and none have been asked for a public review yet. Review Chaser can reach them in one click.`,
+      wow: 30,
     });
   }
 
