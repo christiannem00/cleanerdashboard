@@ -234,7 +234,7 @@ export default async function AdminUserDetail({
             ))}
             {notes.map((f: Row) => (
               <div className="flag" key={f.id}>
-                <div className="ava" style={{ background: "#0f766e", fontSize: 14 }}>
+                <div className="ava" style={{ background: "#166534", fontSize: 14 }}>
                   💬
                 </div>
                 <div className="body">

@@ -2,7 +2,7 @@
 
 :root {
   --page: #f5f6f8; --panel: #fff; --ink: #111827; --muted: #6b7280; --line: #e6e8ec;
-  --brand: #0d9488; --brand2: #0f766e; --star: #0f9d58; --starbg: #e6f4ea; --solid: #1a73e8; --solidbg: #e8f0fe;
+  --brand: #166534; --brand2: #14532d; --star: #0f9d58; --starbg: #e6f4ea; --solid: #1a73e8; --solidbg: #e8f0fe;
   --watch: #e8930c; --watchbg: #fef4e2; --risk: #d93025; --riskbg: #fce8e6; --sample: #7c3aed; --samplebg: #f3ecfe;
   --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.1);
 }
@@ -25,7 +25,7 @@ header.top .sub { color: #c7ccd4; }
 h1 { font-size: 20px; margin: 0; letter-spacing: -.2px; }
 .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
 .topright { display: flex; align-items: center; gap: 12px; }
-.periodpill { font-size: 12px; color: var(--brand2); background: #e7f5f3; border: 1px solid #cdeae6; padding: 5px 11px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+.periodpill { font-size: 12px; color: var(--brand2); background: #e7f2ea; border: 1px solid #cbe5d3; padding: 5px 11px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
 .who { color: #c7ccd4; font-size: 12px; }
 .btn { background: var(--brand); color: #fff; border: none; padding: 9px 15px; border-radius: 9px; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; }
 .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
@@ -186,7 +186,7 @@ footer { margin-top: 26px; font-size: 11.5px; color: var(--muted); text-align: c
 .pmlist { margin: 10px 0 0; padding-left: 20px; font-size: 13px; color: #4b5563; display: grid; gap: 6px; }
 .pmgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin: 22px 0 10px; }
 .pmtile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; box-shadow: var(--shadow); }
-.pmtile .pmicon { width: 42px; height: 42px; border-radius: 11px; background: #e7f5f3; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; }
+.pmtile .pmicon { width: 42px; height: 42px; border-radius: 11px; background: #e7f2ea; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; }
 .pmtile b { display: block; font-size: 14.5px; margin-bottom: 4px; }
 .pmtile p { margin: 0; font-size: 13px; color: #4b5563; line-height: 1.5; }
 @media (max-width: 920px) { .pmgrid { grid-template-columns: 1fr; } }
