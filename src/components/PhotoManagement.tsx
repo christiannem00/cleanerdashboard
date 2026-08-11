@@ -1,46 +1,8 @@
 "use client";
 
-import { useState } from "react";
-
 const SHOWCASE_URL = "https://showcase.serviche.com/";
 
-export default function PhotoManagement({
-  initialUrl,
-}: {
-  initialUrl: string;
-  userId?: string;
-}) {
-  // Once they've connected before (or click Sign in), go straight to the app window.
-  const [showApp, setShowApp] = useState(Boolean(initialUrl));
-
-  if (showApp) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "14px 16px 16px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
-          <b style={{ fontSize: 15 }}>📷 Photo Management — Showcase</b>
-          <div style={{ display: "flex", gap: 8 }}>
-            <a className="btn" href={SHOWCASE_URL} target="_blank" rel="noreferrer">Open full screen ↗</a>
-            <button className="btn ghost" onClick={() => setShowApp(false)}>Setup steps</button>
-          </div>
-        </div>
-        <iframe
-          className="rcframe"
-          style={{ minHeight: "calc(100vh - 90px)" }}
-          src={SHOWCASE_URL}
-          title="Showcase"
-          allow="camera; clipboard-write"
-        />
-        <p className="sub" style={{ marginTop: 8 }}>
-          Trouble signing in inside this window? Use{" "}
-          <a href={SHOWCASE_URL} target="_blank" rel="noreferrer" style={{ color: "var(--brand)", fontWeight: 600 }}>
-            Open full screen ↗
-          </a>{" "}
-          — some sign-in flows only work in a full browser tab.
-        </p>
-      </div>
-    );
-  }
-
+export default function PhotoManagement(_props: { initialUrl?: string; userId?: string }) {
   return (
     <div className="wrap">
       <header className="top">
@@ -51,13 +13,18 @@ export default function PhotoManagement({
             <div className="sub">Your team&apos;s job photos, powered by the Showcase app</div>
           </div>
         </div>
+        <div className="topright">
+          <a className="btn" href={SHOWCASE_URL} target="_blank" rel="noreferrer">
+            Open Showcase ↗
+          </a>
+        </div>
       </header>
 
       <div className="insight">
         <h3>Get set up in three steps</h3>
         <p>
           Showcase is where your cleaners snap before/after photos on every job.
-          Connect it once and your team&apos;s work shows up here.
+          Connect it once and your team&apos;s work shows up there.
         </p>
       </div>
 
@@ -105,9 +72,9 @@ export default function PhotoManagement({
           <div style={{ flex: 1 }}>
             <b>Sign in</b>
             <p>Sign in to Showcase to see your team&apos;s work.</p>
-            <button className="btn" style={{ marginTop: 10 }} onClick={() => setShowApp(true)}>
-              Sign in
-            </button>
+            <a className="btn" style={{ marginTop: 10, display: "inline-block" }} href={SHOWCASE_URL} target="_blank" rel="noreferrer">
+              Sign in ↗
+            </a>
           </div>
         </div>
       </div>
