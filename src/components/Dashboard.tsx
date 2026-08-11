@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Cleaner, Dataset } from "@/lib/compute";
+import InsightCard from "@/components/InsightCard";
 
 const money = (n: number) => "$" + (n || 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
 const pct1 = (n: number) => (n || 0).toFixed(1) + "%";
@@ -17,6 +18,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
   const [sortKey, setSortKey] = useState<keyof Cleaner>("score");
   const [dir, setDir] = useState(-1);
   const [fb, setFb] = useState<FB>({ open: false, kind: "note", context: "", message: "", status: "" });
+  const boardRef = useRef<HTMLDivElement>(null);
   const t = data.totals;
 
   const TAB_LABELS: Record<Tab, string> = {
@@ -111,6 +113,8 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
 
   return (
     <div onContextMenu={onContextMenu}>
+      <InsightCard data={data} onSeeBreakdown={() => boardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} />
+
       <div className="fbbar">
         <span className="hint">Right-click anywhere to leave a note.</span>
         <button className="btn fbglow" onClick={() => openFeedback("note", describeLocation(null))}>💬 Give feedback</button>
@@ -126,7 +130,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
         ))}
       </div>
 
-      <div className="tabs">
+      <div className="tabs" ref={boardRef} style={{ scrollMarginTop: 14 }}>
         {([["score", "🏆 Scoreboard"], ["churn", "📉 Churn"], ["credits", "💸 Refunds & comps"], ["complaints", "📞 Complaints"]] as [Tab, string][]).map(([v, label]) => (
           <div key={v} className={"tab" + (tab === v ? " active" : "")} onClick={() => setTab(v)}>{label}</div>
         ))}

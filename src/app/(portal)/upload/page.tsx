@@ -1,12 +1,22 @@
 "use client";
-import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { computeDataset, ComputeError, type Dataset, type ParsedFile } from "@/lib/compute";
+import InsightCard from "@/components/InsightCard";
 
 export default function UploadPage() {
+  return (
+    <Suspense fallback={<div className="wrap" />}>
+      <UploadInner />
+    </Suspense>
+  );
+}
+
+function UploadInner() {
   const router = useRouter();
+  const first = useSearchParams().get("first") === "1";
   const bookingsRef = useRef<HTMLInputElement>(null);
   const providersRef = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState<"" | "bookings" | "providers">("");
@@ -84,6 +94,16 @@ export default function UploadPage() {
         </div>
         <Link className="btn ghost" href="/dashboard">← All uploads</Link>
       </header>
+
+      {first && (
+        <div className="msg ok" style={{ maxWidth: 640, display: "flex", gap: 10, alignItems: "flex-start" }}>
+          <span style={{ fontSize: 18, lineHeight: 1 }}>👋</span>
+          <span>
+            <b>One quick step to unlock Sergio.</b> Drop your BookingKoala export below — it powers your
+            Cleaner Dashboard, Review Chaser, and your instant business report. You only do this once.
+          </span>
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <div
@@ -168,6 +188,8 @@ export default function UploadPage() {
 
       {data && (
         <>
+          <InsightCard data={data} />
+
           <div className="kpis">
             <div className="kpi"><div className="l">Cleaners</div><div className="v">{data.totals.cleaners}</div><div className="m">{data.totals.active_cleaners} active</div></div>
             <div className="kpi"><div className="l">Jobs</div><div className="v">{data.totals.jobs}</div><div className="m">this period</div></div>

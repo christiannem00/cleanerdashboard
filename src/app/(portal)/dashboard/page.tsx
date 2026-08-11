@@ -15,6 +15,10 @@ export default async function DashboardList() {
     .select("id, label, filename, period, created_at, data")
     .order("created_at", { ascending: false });
 
+  // Onboarding gate: the Cleaner Dashboard is built entirely from an uploaded
+  // BookingKoala export. No upload → send them to /upload first.
+  if (!uploads || uploads.length === 0) redirect("/upload?first=1");
+
   const { data: waitlistRows } = await supabase
     .from("subscribers")
     .select("id")
