@@ -192,11 +192,11 @@ footer { margin-top: 26px; font-size: 11.5px; color: var(--muted); text-align: c
 @media (max-width: 920px) { .pmgrid { grid-template-columns: 1fr; } }
 
 /* Give-feedback glow */
-.btn.fbglow { background: #f5b301; color: #2a2100; animation: fbglow 2.4s ease-in-out infinite; }
-.btn.fbglow:hover { background: #ffc21a; }
+.btn.fbglow { background: #ffe08a; color: #5c4a00; border: 1px solid #f3d16a; animation: fbglow 2.4s ease-in-out infinite; }
+.btn.fbglow:hover { background: #ffe9a8; }
 @keyframes fbglow {
-  0%, 100% { box-shadow: 0 0 4px rgba(245, 179, 1, 0.35); }
-  50% { box-shadow: 0 0 16px rgba(245, 179, 1, 0.85); }
+  0%, 100% { box-shadow: 0 0 3px rgba(243, 209, 106, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(243, 209, 106, 0.65); }
 }
 
 /* Need-help floating widget */

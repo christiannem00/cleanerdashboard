@@ -22,11 +22,10 @@ export default async function DashboardList() {
           <div className="logo">S</div>
           <div>
             <h1>Cleaner Performance Dashboard</h1>
-            <div className="sub">Upload a BookingKoala export · powered by Sergio</div>
+            <div className="sub">Get honest insights into your staff&apos;s performance.</div>
           </div>
         </div>
         <div className="topright">
-          <span className="who">{user.email}</span>
           <Link className="btn" href="/upload">+ New upload</Link>
         </div>
       </header>
