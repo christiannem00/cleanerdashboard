@@ -194,7 +194,7 @@ export default function ReviewChaserEmbed({ candidates = [] }: { candidates?: Pi
             <button className="btn dark" disabled={adding || picked.size === 0} onClick={addToCampaign}>
               {adding ? "Adding…" : `Add ${picked.size} client${picked.size === 1 ? "" : "s"} to campaign →`}
             </button>
-            <button className="linkbtn" onClick={() => setPhase("ready")}>Skip for now</button>
+            <span className="mut" style={{ fontSize: 12 }}>Select at least one client to start your campaign.</span>
           </div>
         </div>
       )}
