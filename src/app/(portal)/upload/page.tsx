@@ -23,9 +23,10 @@ function UploadInner() {
   const [bookings, setBookings] = useState<ParsedFile | null>(null);
   const [providers, setProviders] = useState<ParsedFile | null>(null);
   const [data, setData] = useState<Dataset | null>(null);
-  const [filename, setFilename] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const uploadId = useRef<string | null>(null);
 
   function handlePick(which: "bookings" | "providers", fileList: FileList | null) {
     setErr(null);
@@ -47,7 +48,8 @@ function UploadInner() {
       try {
         const ds = computeDataset(files);
         setData(ds);
-        setFilename(files.map((x) => x.name).join(", "));
+        // Persist immediately so the report survives navigation — no manual save.
+        void persist(ds, files.map((x) => x.name).join(", "));
       } catch (e) {
         setData(null);
         setErr(e instanceof ComputeError ? e.message : "Could not parse this file.");
@@ -56,36 +58,37 @@ function UploadInner() {
     rd.readAsText(f);
   }
 
-  async function save() {
-    if (!data) return;
+  // Insert on first parse, update the same row when the providers file is added.
+  async function persist(ds: Dataset, filename: string) {
     setSaving(true);
+    setSaved(false);
     setErr(null);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/login"); return; }
+    if (uploadId.current) {
+      const { error } = await supabase
+        .from("uploads")
+        .update({ filename, period: ds.totals.period, data: ds })
+        .eq("id", uploadId.current);
+      setSaving(false);
+      if (error) { setErr(error.message); return; }
+      setSaved(true);
+      return;
+    }
     // Auto-name the upload with the current date & time — no prompt needed.
     const autoLabel = new Date().toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
+      month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
     });
     const { data: row, error } = await supabase
       .from("uploads")
-      .insert({
-        user_id: user.id,
-        email: user.email,
-        label: autoLabel,
-        filename,
-        period: data.totals.period,
-        data,
-      })
+      .insert({ user_id: user.id, email: user.email, label: autoLabel, filename, period: ds.totals.period, data: ds })
       .select("id")
       .single();
     setSaving(false);
     if (error) { setErr(error.message); return; }
-    router.push("/overview");
+    uploadId.current = row!.id;
+    setSaved(true);
   }
 
   return (
@@ -106,7 +109,7 @@ function UploadInner() {
           <span style={{ fontSize: 18, lineHeight: 1 }}>👋</span>
           <span>
             <b>One quick step to unlock Sergio.</b> Drop your BookingKoala export below — it powers your
-            Cleaner Dashboard, Review Chaser, and your instant business report. You only do this once.
+            Cleaner Dashboard, Review Chaser, and your instant business report.
           </span>
         </div>
       )}
@@ -206,8 +209,16 @@ function UploadInner() {
           </div>
 
           <div className="card" style={{ maxWidth: 520, marginTop: 16 }}>
-            <button className="btn dark" style={{ width: "100%" }} onClick={save} disabled={saving}>
-              {saving ? "Saving…" : "Save & view dashboard"}
+            <div style={{ fontSize: 12.5, color: saved ? "var(--brand)" : "var(--muted)", marginBottom: 10, textAlign: "center" }}>
+              {saving ? "Saving your report…" : saved ? "✓ Saved to your account" : "Preparing your report…"}
+            </div>
+            <button
+              className="btn dark"
+              style={{ width: "100%" }}
+              onClick={() => router.push("/overview")}
+              disabled={saving || !saved}
+            >
+              {saving ? "Saving…" : "View your dashboard →"}
             </button>
           </div>
         </>
