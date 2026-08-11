@@ -27,7 +27,7 @@ export default function WaitlistCta({ initialJoined = false }: { defaultEmail?: 
       {joined ? (
         <>
           <h1 style={{ fontSize: 18 }}>You&apos;re on the waitlist 🎉</h1>
-          <p className="sub">We&apos;ll email you as soon as automatic runs are ready.</p>
+          <p className="sub">We&apos;ll email you as soon as a spot opens in the beta.</p>
         </>
       ) : (
         <>
