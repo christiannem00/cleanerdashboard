@@ -31,7 +31,6 @@ export default async function DashboardView({ params }: { params: { id: string }
           </div>
         </div>
         <div className="topright">
-          <span className="periodpill">{data.totals?.period || upload.period || "—"}</span>
           <Link className="btn ghost" href="/dashboard">← All uploads</Link>
         </div>
       </header>

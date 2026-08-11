@@ -96,7 +96,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
     <div onContextMenu={onContextMenu}>
       <div className="fbbar">
         <span className="hint">Right-click anywhere to leave a note.</span>
-        <button className="btn ghost" onClick={() => openFeedback("note", "General note")}>💬 Give feedback</button>
+        <button className="btn fbglow" onClick={() => openFeedback("note", "General note")}>💬 Give feedback</button>
       </div>
 
       <div className="kpis">
