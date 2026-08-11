@@ -12,9 +12,10 @@ const nextConfig = {
       { source: "/rc-app", destination: `${RC_ORIGIN}/dashboard` },
       { source: "/favicon.svg", destination: `${RC_ORIGIN}/favicon.svg` },
       // Wildcard: every ReviewChaser endpoint (current and future) proxies
-      // through. The portal's own /api/rc/* route handlers are filesystem
+      // through — EXCEPT the admin sms-queue, which stays off the client-facing
+      // domain. The portal's own /api/rc/* route handlers are filesystem
       // routes, so they always win over this rewrite.
-      { source: "/api/:path*", destination: `${RC_ORIGIN}/api/:path*` },
+      { source: "/api/:path((?!sms-queue).*)", destination: `${RC_ORIGIN}/api/:path` },
     ];
   },
 };
