@@ -132,7 +132,7 @@ export default function Overview({ data }: { data: Dataset }) {
             name: c.name,
             meta: `last ${c.last || "—"} · ${c.days_since_last}d ago · ${money(c.spend)}`,
             copyLabel: "Copy win-back",
-            copy: `Hi ${firstName(c.name)}! We'd love to have you back. Here's a $20 credit on your next clean — it expires in 2 days. Want me to grab you a slot?`,
+            copy: `Hi ${firstName(c.name)}! You have a $19.71 coupon on your account that expires next Friday. Would you like to book a cleaning service before then to lock in your discount?`,
           }))}
         />
 
