@@ -19,13 +19,30 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
   const [fb, setFb] = useState<FB>({ open: false, kind: "note", context: "", message: "", status: "" });
   const t = data.totals;
 
+  const TAB_LABELS: Record<Tab, string> = {
+    score: "Scoreboard",
+    churn: "Churn",
+    credits: "Refunds & comps",
+    complaints: "Complaints",
+  };
+  // Build a precise "where did this feedback come from" string from the element
+  // the user right-clicked: active tab › nearest labelled section › cleaner.
+  function describeLocation(target: HTMLElement | null): string {
+    const parts: string[] = [`${TAB_LABELS[tab]} tab`];
+    const section = target?.closest("[data-section]") as HTMLElement | null;
+    if (section?.dataset.section) parts.push(section.dataset.section);
+    const cleaner = target?.closest("[data-cleaner]") as HTMLElement | null;
+    if (cleaner?.dataset.cleaner) parts.push(`cleaner: ${cleaner.dataset.cleaner}`);
+    const loc = parts.join(" › ");
+    // Anchor to which upload this is, so a note is unambiguous across periods.
+    return t.period ? `${loc} — ${t.period}` : loc;
+  }
   function openFeedback(kind: FB["kind"], context: string) {
     setFb({ open: true, kind, context, message: "", status: "" });
   }
   function onContextMenu(e: React.MouseEvent) {
-    const el = (e.target as HTMLElement).closest("[data-cleaner]") as HTMLElement | null;
     e.preventDefault();
-    openFeedback("note", el?.dataset.cleaner ? `Note on ${el.dataset.cleaner}` : "General note");
+    openFeedback("note", describeLocation(e.target as HTMLElement));
   }
   async function submitFeedback() {
     setFb((f) => ({ ...f, status: "saving" }));
@@ -96,12 +113,12 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
     <div onContextMenu={onContextMenu}>
       <div className="fbbar">
         <span className="hint">Right-click anywhere to leave a note.</span>
-        <button className="btn fbglow" onClick={() => openFeedback("note", "General note")}>💬 Give feedback</button>
+        <button className="btn fbglow" onClick={() => openFeedback("note", describeLocation(null))}>💬 Give feedback</button>
       </div>
 
       <div className="kpis">
         {kpis.map((k) => (
-          <div className="kpi" key={k[0]} style={k[0] === "Complaints" ? { opacity: 0.5 } : undefined}>
+          <div className="kpi" key={k[0]} data-section={`KPI: ${k[0]}`} style={k[0] === "Complaints" ? { opacity: 0.5 } : undefined}>
             <div className="l">{k[0]}</div>
             <div className="v">{k[1]}</div>
             <div className="m">{k[2]}</div>
@@ -116,7 +133,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
       </div>
 
       {tab === "score" && (
-        <div className="panel">
+        <div className="panel" data-section="Team scoreboard">
           <h2>Team scoreboard <span className="mut" style={{ fontWeight: 400 }}>— ranked by composite performance score</span></h2>
           <div className="legend">
             <span><span className="dot" style={{ background: "var(--star)" }} />Star ≥75</span>
@@ -152,7 +169,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
       )}
 
       {tab === "churn" && (
-        <div className="panel">
+        <div className="panel" data-section="Churn by cleaner">
           <h2>Churn rate by cleaner <span className="mut" style={{ fontWeight: 400 }}>(cancellation proxy)</span></h2>
           {bar([...data.cleaners].sort((a, b) => b.canc_rate - a.canc_rate), "canc_rate", (v) => pct1(v), (c) => (c.canc_rate > 7 ? "#d93025" : c.canc_rate > 5 ? "#e8930c" : "#0f9d58"))}
           <div className="section-note">Lifetime cancelled ÷ total bookings per cleaner. True client churn — a recurring client who quits after a bad clean — is unlocked once the cancelled/paused recurring export is connected.</div>
@@ -160,7 +177,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
       )}
 
       {tab === "credits" && (
-        <div className="panel">
+        <div className="panel" data-section="Refunds & comps">
           <h2>Refunds &amp; comps — total handed back, this period</h2>
           {bar([...data.cleaners].sort((a, b) => b.credits - a.credits), "credits", (v) => (v > 0 ? money(v) : "$0"), (c) => (c.credits > 100 ? "#d93025" : c.credits > 0 ? "#e8930c" : "#0f9d58"))}
           <div className="section-note">Refunds + negative price adjustments (comps) over the window — hard dollars given back to clients, a quality signal that doesn&apos;t depend on ratings.</div>
@@ -168,7 +185,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
       )}
 
       {tab === "complaints" && (
-        <div className="panel" style={{ opacity: 0.9 }}>
+        <div className="panel" data-section="Complaints (beta)" style={{ opacity: 0.9 }}>
           <h2>
             Complaints / Clean <span className="betachip">Limited Beta</span>
           </h2>

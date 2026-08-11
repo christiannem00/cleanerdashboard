@@ -1,12 +1,8 @@
 import Link from "next/link";
 import { createAdminClient, requireAdmin } from "@/lib/supabase/admin";
 import AdminTabs from "@/components/AdminTabs";
-import {
-  phoneServiceLabel,
-  bookingSoftwareLabel,
-  fmtDay,
-  fmtAgo,
-} from "@/lib/labels";
+import AdminUsersTable, { type AdminUser } from "@/components/AdminUsersTable";
+import { phoneServiceLabel, bookingSoftwareLabel, fmtAgo } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 
@@ -41,9 +37,9 @@ export default async function AdminOverview() {
     db
       .from("business_profiles")
       .select(
-        "user_id, phone_service, phone_service_other, booking_software, booking_software_other, created_at"
+        "user_id, phone_service, phone_service_other, booking_software, booking_software_other, created_at, updated_at"
       ),
-    db.from("uploads").select("id, user_id, filename, label, created_at, data"),
+    db.from("uploads").select("id, user_id, filename, label, period, created_at, data"),
     db.from("feedback").select("id, user_id, email, kind, context, message, created_at"),
     db.from("subscribers").select("email, source, created_at"),
   ]);
@@ -89,15 +85,18 @@ export default async function AdminOverview() {
     subscribers.map((s: Row) => (s.email ?? "").toLowerCase())
   );
 
-  // Build one record per auth user, newest signups first.
-  const users = authUsers
-    .map((a: Row) => {
+  // Build one record per auth user (with full nested detail for the inline
+  // dropdown), newest signups first.
+  const users: AdminUser[] = authUsers
+    .map((a: Row): AdminUser => {
       const p = profileById.get(a.id);
       const biz = bizByUser.get(a.id);
       const ups = (uploadsByUser.get(a.id) ?? []).sort(
         (x, y) => +new Date(y.created_at) - +new Date(x.created_at)
       );
-      const fbs = feedbackByUser.get(a.id) ?? [];
+      const fbs = (feedbackByUser.get(a.id) ?? []).sort(
+        (x, y) => +new Date(y.created_at) - +new Date(x.created_at)
+      );
       const email = (a.email ?? p?.email ?? "").toLowerCase();
       return {
         id: a.id,
@@ -114,6 +113,23 @@ export default async function AdminOverview() {
         subscribed: subscribedEmails.has(email),
         lastSignIn: a.last_sign_in_at ?? null,
         confirmed: Boolean(a.email_confirmed_at),
+        onboardingSaved: biz?.updated_at ?? null,
+        uploads: ups.map((up: Row) => ({
+          id: up.id,
+          title: up.label || up.filename || "Upload",
+          period: up.period ?? null,
+          created_at: up.created_at,
+          cleaners: up.data?.totals?.cleaners ?? null,
+          jobs: up.data?.totals?.jobs ?? null,
+          rev_mo: up.data?.totals?.rev_mo ?? null,
+        })),
+        feedback: fbs.map((f: Row) => ({
+          id: f.id,
+          kind: f.kind ?? "note",
+          context: f.context ?? null,
+          message: f.message ?? null,
+          created_at: f.created_at,
+        })),
       };
     })
     .sort((a, b) => +new Date(b.signedUp ?? 0) - +new Date(a.signedUp ?? 0));
@@ -260,79 +276,10 @@ export default async function AdminOverview() {
 
       <div className="panel" style={{ marginTop: 18 }}>
         <h2>👥 All users ({users.length})</h2>
-        {users.length === 0 ? (
-          <div className="empty" style={{ border: "none", margin: 0 }}>
-            No users yet.
-          </div>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table>
-              <thead>
-                <tr>
-                  <th className="l">User</th>
-                  <th className="l">Phone service</th>
-                  <th className="l">Booking software</th>
-                  <th>Onboarded</th>
-                  <th>Uploads</th>
-                  <th>Feedback</th>
-                  <th>Last active</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id}>
-                    <td className="name l">
-                      <Link href={`/admin/${u.id}`}>
-                        {u.email}
-                        <small>
-                          joined {fmtDay(u.signedUp)}
-                          {u.confirmed ? "" : " · unconfirmed"}
-                        </small>
-                      </Link>
-                    </td>
-                    <td className="l">{u.phone}</td>
-                    <td className="l">{u.booking}</td>
-                    <td>
-                      {u.onboarded ? (
-                        <span className="tierb t-star">Yes</span>
-                      ) : (
-                        <span className="tierb t-watch">Pending</span>
-                      )}
-                    </td>
-                    <td>
-                      {u.uploadCount}
-                      {u.lastUpload ? (
-                        <small style={{ display: "block", color: "var(--muted)" }}>
-                          {fmtAgo(u.lastUpload)}
-                        </small>
-                      ) : null}
-                    </td>
-                    <td>
-                      {u.noteCount || u.betaCount ? (
-                        <>
-                          {u.noteCount ? `${u.noteCount} note${u.noteCount > 1 ? "s" : ""}` : ""}
-                          {u.betaCount ? (
-                            <span className="betachip" style={{ marginLeft: 6 }}>
-                              {u.betaCount} beta
-                            </span>
-                          ) : null}
-                        </>
-                      ) : (
-                        <span className="mut">—</span>
-                      )}
-                    </td>
-                    <td>
-                      {u.lastSignIn ? fmtAgo(u.lastSignIn) : <span className="mut">never</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <AdminUsersTable users={users} />
         <div className="section-note">
-          Click a user for their full profile and activity. Read with the service
-          role — every user is visible regardless of row-level security.
+          Click a user to expand their full profile, uploads, and feedback. Read
+          with the service role — every user is visible regardless of row-level security.
         </div>
       </div>
 
@@ -352,9 +299,9 @@ export default async function AdminOverview() {
                 <div className="body">
                   <div>
                     {a.userId ? (
-                      <Link href={`/admin/${a.userId}`} style={{ fontWeight: 600 }}>
+                      <a href={`#u-${a.userId}`} style={{ fontWeight: 600, color: "var(--brand)" }}>
                         {a.email}
-                      </Link>
+                      </a>
                     ) : (
                       <b>{a.email}</b>
                     )}{" "}
