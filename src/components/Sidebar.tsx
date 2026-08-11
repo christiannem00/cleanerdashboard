@@ -18,7 +18,6 @@ export default function Sidebar() {
         <div className="logo">S</div>
         <div>
           <b>Sergio Lite</b>
-          <small>serviche.com</small>
         </div>
       </Link>
       <nav className="sidenav" style={{ flex: "none" }}>
