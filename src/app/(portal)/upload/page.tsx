@@ -7,38 +7,45 @@ import { computeDataset, ComputeError, type Dataset, type ParsedFile } from "@/l
 
 export default function UploadPage() {
   const router = useRouter();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [over, setOver] = useState(false);
+  const bookingsRef = useRef<HTMLInputElement>(null);
+  const providersRef = useRef<HTMLInputElement>(null);
+  const [over, setOver] = useState<"" | "bookings" | "providers">("");
+  const [bookings, setBookings] = useState<ParsedFile | null>(null);
+  const [providers, setProviders] = useState<ParsedFile | null>(null);
   const [data, setData] = useState<Dataset | null>(null);
   const [filename, setFilename] = useState("");
   const [label, setLabel] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  function handleFiles(fileList: FileList | null) {
+  function handlePick(which: "bookings" | "providers", fileList: FileList | null) {
     setErr(null);
-    const arr = Array.from(fileList || []);
-    if (!arr.length) return;
-    let done = 0;
-    const out: ParsedFile[] = [];
-    arr.forEach((f) => {
-      const rd = new FileReader();
-      rd.onload = () => {
-        out.push({ name: f.name, text: String(rd.result) });
-        if (++done === arr.length) {
-          try {
-            const ds = computeDataset(out);
-            setData(ds);
-            setFilename(arr.map((x) => x.name).join(", "));
-            if (!label) setLabel(arr[0].name.replace(/\.csv$/i, ""));
-          } catch (e) {
-            setData(null);
-            setErr(e instanceof ComputeError ? e.message : "Could not parse this file.");
-          }
-        }
-      };
-      rd.readAsText(f);
-    });
+    const f = fileList?.[0];
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      const pf: ParsedFile = { name: f.name, text: String(rd.result) };
+      const nextBookings = which === "bookings" ? pf : bookings;
+      const nextProviders = which === "providers" ? pf : providers;
+      if (which === "bookings") setBookings(pf);
+      else setProviders(pf);
+
+      const files = [nextBookings, nextProviders].filter(Boolean) as ParsedFile[];
+      if (!nextBookings) {
+        setData(null);
+        return; // providers alone can't be scored — wait for the bookings file
+      }
+      try {
+        const ds = computeDataset(files);
+        setData(ds);
+        setFilename(files.map((x) => x.name).join(", "));
+        if (!label) setLabel(nextBookings.name.replace(/\.csv$/i, ""));
+      } catch (e) {
+        setData(null);
+        setErr(e instanceof ComputeError ? e.message : "Could not parse this file.");
+      }
+    };
+    rd.readAsText(f);
   }
 
   async function save() {
@@ -78,21 +85,43 @@ export default function UploadPage() {
         <Link className="btn ghost" href="/dashboard">← All uploads</Link>
       </header>
 
-      <div
-        className={"drop" + (over ? " over" : "")}
-        onClick={() => fileRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); setOver(true); }}
-        onDragLeave={(e) => { e.preventDefault(); setOver(false); }}
-        onDrop={(e) => { e.preventDefault(); setOver(false); handleFiles(e.dataTransfer.files); }}
-      >
-        <span className="ic">📥</span>
-        <div>
-          <b>Drop your CSV here, or click to choose</b>
-          <br />
-          <small>You can drop the providers and bookings exports together. Nothing is uploaded until you hit Save.</small>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div
+          className={"drop" + (over === "bookings" ? " over" : "")}
+          style={bookings ? { borderColor: "var(--brand)", background: "#f0faf8" } : undefined}
+          onClick={() => bookingsRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setOver("bookings"); }}
+          onDragLeave={(e) => { e.preventDefault(); setOver(""); }}
+          onDrop={(e) => { e.preventDefault(); setOver(""); handlePick("bookings", e.dataTransfer.files); }}
+        >
+          <span className="ic">{bookings ? "✅" : "1️⃣"}</span>
+          <div>
+            <b>{bookings ? bookings.name : "Bookings export"}</b>
+            <br />
+            <small>{bookings ? "Loaded — click to replace" : "Drop your Bookings CSV here, or click to choose"}</small>
+          </div>
+          <input ref={bookingsRef} type="file" accept=".csv" style={{ display: "none" }} onChange={(e) => handlePick("bookings", e.target.files)} />
         </div>
-        <input ref={fileRef} type="file" accept=".csv" multiple style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
+        <div
+          className={"drop" + (over === "providers" ? " over" : "")}
+          style={providers ? { borderColor: "var(--brand)", background: "#f0faf8" } : undefined}
+          onClick={() => providersRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setOver("providers"); }}
+          onDragLeave={(e) => { e.preventDefault(); setOver(""); }}
+          onDrop={(e) => { e.preventDefault(); setOver(""); handlePick("providers", e.dataTransfer.files); }}
+        >
+          <span className="ic">{providers ? "✅" : "2️⃣"}</span>
+          <div>
+            <b>{providers ? providers.name : "Providers export"}</b>
+            <br />
+            <small>{providers ? "Loaded — click to replace" : "Drop your Providers CSV here — unlocks Churn %"}</small>
+          </div>
+          <input ref={providersRef} type="file" accept=".csv" style={{ display: "none" }} onChange={(e) => handlePick("providers", e.target.files)} />
+        </div>
       </div>
+      {providers && !bookings && (
+        <div className="msg ok" style={{ maxWidth: 520 }}>Providers loaded — now add your Bookings export to score the team.</div>
+      )}
 
       {err && <div className="msg err" style={{ maxWidth: 520 }}>{err}</div>}
 
@@ -133,7 +162,7 @@ export default function UploadPage() {
                 In BookingKoala go to <b>Providers → Export</b> and download the providers CSV.
                 It carries each cleaner&apos;s lifetime bookings and cancellations, which is what
                 the churn numbers are built from — without it, churn shows 0% for everyone.
-                Then <b>drop both files above together</b> (the drop zone takes multiple files).
+                Then upload it in slot 2 above.
               </p>
             </div>
           </div>
