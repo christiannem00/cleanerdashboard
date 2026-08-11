@@ -20,14 +20,6 @@ export default function PhotoManagement(_props: { initialUrl?: string; userId?: 
         </div>
       </header>
 
-      <div className="insight">
-        <h3>Get set up in three steps</h3>
-        <p>
-          Showcase is where your cleaners snap before/after photos on every job.
-          Connect it once and your team&apos;s work shows up there.
-        </p>
-      </div>
-
       <div className="steps">
         <div className="step">
           <div className="stepnum">1</div>
@@ -71,7 +63,6 @@ export default function PhotoManagement(_props: { initialUrl?: string; userId?: 
           <div className="stepnum">3</div>
           <div style={{ flex: 1 }}>
             <b>Sign in</b>
-            <p>Sign in to Showcase to see your team&apos;s work.</p>
             <ul className="pmlist">
               <li>The web browser is the administrator&apos;s view — all photos taken by your staff will appear here.</li>
               <li>No more low-quality photos sent by text, email, AirDrop, etc.</li>

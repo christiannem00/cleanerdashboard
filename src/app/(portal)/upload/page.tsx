@@ -160,9 +160,6 @@ export default function UploadPage() {
               <b>Also export your Providers list — this unlocks Churn %</b>
               <p>
                 In BookingKoala go to <b>Providers → Export</b> and download the providers CSV.
-                It carries each cleaner&apos;s lifetime bookings and cancellations, which is what
-                the churn numbers are built from — without it, churn shows 0% for everyone.
-                Then upload it in slot 2 above.
               </p>
             </div>
           </div>
