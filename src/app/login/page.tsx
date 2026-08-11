@@ -64,6 +64,9 @@ export default function LoginPage() {
             {err && <div className="msg err">{err}</div>}
           </>
         )}
+        <p className="sub" style={{ marginTop: 16, marginBottom: 0, fontSize: 11.5, textAlign: "center" }}>
+          <a href="/privacy" style={{ color: "var(--muted)", textDecoration: "underline" }}>Privacy Policy</a>
+        </p>
       </div>
     </div>
   );

@@ -45,6 +45,9 @@ export default function Sidebar() {
             ↩ Sign out
           </button>
         </form>
+        <Link href="/privacy" className="navlink signout" style={{ fontSize: 11.5 }}>
+          Privacy Policy
+        </Link>
       </div>
     </aside>
   );
