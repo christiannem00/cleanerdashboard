@@ -41,7 +41,7 @@ export default function LoginPage() {
         {sent ? (
           <>
             <h1>Check your email</h1>
-            <p className="sub">We sent a sign-in link to <b>{email}</b>. Click it to log in to Sergio — no password needed.</p>
+            <p className="sub">We sent a sign-in link to <b>{email}</b>. Click it to log in to Sergio — no password needed. Don&apos;t see it? Check your Spam, Notifications, and Newsletters folders.</p>
             <button className="linkbtn" onClick={() => setSent(false)}>Use a different email</button>
           </>
         ) : (
