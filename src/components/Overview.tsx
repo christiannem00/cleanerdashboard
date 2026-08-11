@@ -35,16 +35,24 @@ export default function Overview({ data }: { data: Dataset }) {
       {/* 1 — the headline aha */}
       <InsightCard data={data} />
 
-      {/* 2 — where the money goes (margin), shown as an equation */}
+      {/* 2 — where the money goes, as a reconciling equation:
+           Billed (full price) − Discounts − Labor = Gross margin.
+           Billed is derived so the equation always balances (margin + labor + discounts). */}
       <div className="margineq">
         <div className="meq-term">
-          <div className="l">Revenue</div>
-          <div className="v">{money(t.revenue)}</div>
-          <div className="m">this period</div>
+          <div className="l">Billed</div>
+          <div className="v">{money(t.margin + t.provider_pay + t.discounts)}</div>
+          <div className="m">at full price</div>
+        </div>
+        <div className="meq-op">−</div>
+        <div className="meq-term meq-disc">
+          <div className="l">Discounts</div>
+          <div className="v">{money(t.discounts)}</div>
+          <div className="m">to clients</div>
         </div>
         <div className="meq-op">−</div>
         <div className="meq-term">
-          <div className="l">Labor paid</div>
+          <div className="l">Labor</div>
           <div className="v">{money(t.provider_pay)}</div>
           <div className="m">to cleaners</div>
         </div>
@@ -54,10 +62,6 @@ export default function Overview({ data }: { data: Dataset }) {
           <div className="v">{money(t.margin)}</div>
           <div className="m">{t.margin_pct}% · before overhead</div>
         </div>
-      </div>
-      <div className="meq-aside">
-        <span className="dot" style={{ background: "var(--watch)" }} />
-        <b>{money(t.discounts)}</b> given away in discounts this period
       </div>
 
       <div className="ovcols">
