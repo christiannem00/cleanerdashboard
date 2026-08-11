@@ -10,7 +10,7 @@ const NAV = [
   { href: "/photos", label: "Photo Management", icon: "📷" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
   return (
     <aside className="side">
@@ -35,6 +35,15 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={pathname.startsWith("/admin") ? "navlink active" : "navlink"}
+          >
+            <span className="navic">🛠️</span>
+            Admin
+          </Link>
+        )}
       </nav>
       <div className="sidescroll">
         <BetaTools />

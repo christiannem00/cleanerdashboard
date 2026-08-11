@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/supabase/admin";
 import Sidebar from "@/components/Sidebar";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
@@ -7,6 +8,7 @@ export default async function PortalLayout({ children }: { children: React.React
   // answered, every portal page redirects to /onboarding.
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const admin = isAdminEmail(user?.email);
   if (user) {
     const { data: profile } = await supabase
       .from("business_profiles")
@@ -18,7 +20,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <div className="portal">
-      <Sidebar />
+      <Sidebar isAdmin={admin} />
       <main className="portalmain">{children}</main>
     </div>
   );

@@ -128,7 +128,7 @@ footer { margin-top: 26px; font-size: 11.5px; color: var(--muted); text-align: c
 .uprow .meta small { color: var(--muted); font-size: 12px; }
 .empty { text-align: center; color: var(--muted); padding: 40px 16px; background: var(--panel); border: 1px dashed var(--line); border-radius: 12px; }
 
-@media (max-width: 920px) { .kpis { grid-template-columns: repeat(3, 1fr); } .wrap { padding: 18px 14px 60px; } td.hcol, th.hcol { display: none; } }
+@media (max-width: 920px) { .kpis { grid-template-columns: repeat(3, 1fr); } .wrap { padding: 18px 14px 60px; } td.hcol, th.hcol { display: none; } .admincols { grid-template-columns: 1fr !important; } }
 @media (max-width: 560px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
 
 /* ---- feedback + beta ---- */
