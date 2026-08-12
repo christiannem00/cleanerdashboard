@@ -26,6 +26,9 @@ export type Cleaner = {
   op_complaints: number; // REAL complaints attributed to this cleaner (was seeded)
   complaint_per_clean: number;
   avg_rating: number | null; // provider "Average" from the providers export
+  ret_eligible: number; // first-time clients this cleaner served (with time to rebook)
+  ret_kept: number; // of those, how many booked again
+  retention_pct: number | null; // null when no eligible first-time clients
   provider_pay: number; // total paid to this cleaner (labor out)
   margin: number; // revenue − labor for their jobs
   labor_pct: number; // labor as % of the revenue they generated
@@ -123,6 +126,9 @@ export type Totals = {
   overdue_clients: number;
   review_targets: number;
   reactivation_targets: number;
+  onetime_total: number; // clients whose first clean was one-time (with time to rebook)
+  onetime_rebooked: number; // of those, how many booked again
+  onetime_rebook_pct: number; // rebooked ÷ total
   window_days: number; // span of the export, for honest annualization
   provider_pay: number; // total labor out
   margin: number; // revenue − labor (gross, before overhead)
@@ -441,6 +447,43 @@ export function computeDataset(files: ParsedFile[]): Dataset {
     });
   });
 
+  // ---- First-clean retention: did the client ever come back after their first clean? ----
+  // Powers two widgets from one definition: retention BY CLEANER (attributed to whoever did
+  // the client's first clean — did that experience convert them?) and the one-time rebook
+  // rate on the Overview. A client only counts as "eligible" when their first clean is at
+  // least REBOOK_GRACE_DAYS before the window end — someone cleaned yesterday hasn't had a
+  // fair chance to rebook yet, and counting them would understate everyone.
+  const REBOOK_GRACE_DAYS = 14;
+  type FirstClean = { first: Date; cleaners: string[]; occurrence: string; cameBack: boolean };
+  const firstCleans: Record<string, FirstClean> = {};
+  bookings.forEach((b) => {
+    if (!b.date || !b.client_id) return;
+    const d = new Date(b.date);
+    const f = firstCleans[b.client_id];
+    if (!f || d < f.first) {
+      // This booking is the new earliest; the old earliest (if any) proves a later visit.
+      const cameBack = f ? true : false;
+      firstCleans[b.client_id] = { first: d, cleaners: b.cleaners, occurrence: b.occurrence, cameBack };
+    } else if (+d > +f.first) {
+      f.cameBack = true;
+    }
+  });
+  const retEligible: Record<string, number> = {};
+  const retKept: Record<string, number> = {};
+  let onetimeTotal = 0;
+  let onetimeRebooked = 0;
+  Object.values(firstCleans).forEach((f) => {
+    if ((+wEnd - +f.first) / DAY < REBOOK_GRACE_DAYS) return; // not a fair chance yet
+    f.cleaners.forEach((n) => {
+      retEligible[n] = (retEligible[n] || 0) + 1;
+      if (f.cameBack) retKept[n] = (retKept[n] || 0) + 1;
+    });
+    if (f.occurrence !== "recurring") {
+      onetimeTotal++;
+      if (f.cameBack) onetimeRebooked++;
+    }
+  });
+
   // ---- Providers export: status, lifetime bookings/cancellations, rating avg ----
   const provMap: Record<string, Record<string, string>> = {};
   (prov || []).forEach((p) => {
@@ -479,6 +522,11 @@ export function computeDataset(files: ParsedFile[]): Dataset {
         op_complaints: a.complaints,
         complaint_per_clean: Math.round((1000 * a.complaints) / a.jobs) / 1000,
         avg_rating: avg > 0 ? avg : null,
+        ret_eligible: retEligible[a.name] || 0,
+        ret_kept: retKept[a.name] || 0,
+        retention_pct: retEligible[a.name]
+          ? Math.round((100 * (retKept[a.name] || 0)) / retEligible[a.name])
+          : null,
         provider_pay: Math.round(a.pay),
         margin: Math.round(a.revenue - a.pay),
         labor_pct: a.revenue > 0 ? Math.round((100 * a.pay) / a.revenue) : 0,
@@ -606,6 +654,9 @@ export function computeDataset(files: ParsedFile[]): Dataset {
     overdue_clients: clients.filter((c) => c.overdue).length,
     review_targets: clients.filter((c) => c.review_ask).length,
     reactivation_targets: clients.filter((c) => c.reactivation).length,
+    onetime_total: onetimeTotal,
+    onetime_rebooked: onetimeRebooked,
+    onetime_rebook_pct: onetimeTotal ? Math.round((100 * onetimeRebooked) / onetimeTotal) : 0,
     window_days: windowDays,
     provider_pay: Math.round(bookings.reduce((s, b) => s + b.provider_pay, 0)),
     margin: Math.round(bookings.reduce((s, b) => s + b.margin, 0)),

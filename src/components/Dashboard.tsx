@@ -10,7 +10,7 @@ const tierColor: Record<string, string> = { star: "var(--star)", solid: "var(--s
 const tierBg: Record<string, string> = { star: "#0f9d58", solid: "#1a73e8", watch: "#e8930c", risk: "#d93025" };
 const initials = (n: string) => n.split(" ").map((x) => x[0]).slice(0, 2).join("").toUpperCase();
 
-type Tab = "score" | "churn" | "credits" | "complaints";
+type Tab = "score" | "churn" | "retention" | "credits" | "complaints";
 type FB = { open: boolean; kind: "note" | "beta_request"; context: string; message: string; status: "" | "saving" | "ok" | "err" };
 
 export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?: string }) {
@@ -24,6 +24,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
   const TAB_LABELS: Record<Tab, string> = {
     score: "Scoreboard",
     churn: "Churn",
+    retention: "Retention",
     credits: "Refunds & comps",
     complaints: "Complaints",
   };
@@ -131,7 +132,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
       </div>
 
       <div className="tabs" ref={boardRef} style={{ scrollMarginTop: 14 }}>
-        {([["score", "🏆 Scoreboard"], ["churn", "📉 Churn"], ["credits", "💸 Refunds & comps"], ["complaints", "📞 Complaints"]] as [Tab, string][]).map(([v, label]) => (
+        {([["score", "🏆 Scoreboard"], ["churn", "📉 Churn"], ["retention", "🧲 Retention"], ["credits", "💸 Refunds & comps"], ["complaints", "📞 Complaints"]] as [Tab, string][]).map(([v, label]) => (
           <div key={v} className={"tab" + (tab === v ? " active" : "")} onClick={() => setTab(v)}>{label}</div>
         ))}
       </div>
@@ -177,6 +178,43 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
           <h2>Churn rate by cleaner <span className="mut" style={{ fontWeight: 400 }}>(cancellation proxy)</span></h2>
           {bar([...data.cleaners].sort((a, b) => b.canc_rate - a.canc_rate), "canc_rate", (v) => pct1(v), (c) => (c.canc_rate > 7 ? "#d93025" : c.canc_rate > 5 ? "#e8930c" : "#0f9d58"))}
           <div className="section-note">Lifetime cancelled ÷ total bookings per cleaner. True client churn — a recurring client who quits after a bad clean — is unlocked once the cancelled/paused recurring export is connected.</div>
+        </div>
+      )}
+
+      {tab === "retention" && (
+        <div className="panel" data-section="Retention by cleaner">
+          <h2>Retention rate by cleaner <span className="mut" style={{ fontWeight: 400 }}>— do their first-time clients come back?</span></h2>
+          {data.cleaners.some((c) => typeof c.retention_pct !== "undefined") ? (
+            (() => {
+              // Worst retention on top, like the Churn tab. Cleaners with no eligible
+              // first-time clients in the window sink to the bottom as "—".
+              const rows = [...data.cleaners].sort(
+                (a, b) => (a.retention_pct ?? 101) - (b.retention_pct ?? 101),
+              );
+              return rows.map((c) => (
+                <div className="barrow" key={c.name} data-cleaner={c.name}>
+                  <div className="nm">{c.name}</div>
+                  <div className="track">
+                    <i style={{
+                      width: Math.max(2, c.retention_pct ?? 0) + "%",
+                      background: c.retention_pct == null ? "#c4c9d0" : c.retention_pct < 40 ? "#d93025" : c.retention_pct < 70 ? "#e8930c" : "#0f9d58",
+                    }} />
+                  </div>
+                  <div className="vv">{c.retention_pct == null ? "—" : `${c.retention_pct}% (${c.ret_kept}/${c.ret_eligible})`}</div>
+                </div>
+              ));
+            })()
+          ) : (
+            <div className="section-note" style={{ borderTop: "none" }}>
+              This upload predates retention tracking — upload a fresh export to see it.
+            </div>
+          )}
+          <div className="section-note">
+            Of the clients whose <b>first-ever clean</b> in this export was done by this cleaner, the share who booked
+            again afterward — the &quot;did that first experience convert them?&quot; number. First cleans in the last 14
+            days are excluded (they haven&apos;t had a fair chance to rebook yet). Small samples: read the (kept/total)
+            counts, not just the percentage.
+          </div>
         </div>
       )}
 

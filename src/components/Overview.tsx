@@ -169,6 +169,15 @@ export default function Overview({ data }: { data: Dataset }) {
             copyLabel: "Copy win-back",
             copy: `Hi ${firstName(c.name)}! You have a $19.71 coupon on your account that expires next Friday. Would you like to book a cleaning service before then to lock in your discount?`,
           }))}
+          footer={
+            // Older uploads predate rebook tracking — only show once the field exists.
+            typeof t.onetime_total === "number" && t.onetime_total > 0 ? (
+              <span>
+                <b>{t.onetime_rebooked} of {t.onetime_total}</b> one-time cleans rebooked ({t.onetime_rebook_pct}%) —
+                first cleans in the last 14 days excluded.
+              </span>
+            ) : undefined
+          }
         />
 
         <ActionList
