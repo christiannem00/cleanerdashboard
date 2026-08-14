@@ -74,10 +74,12 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
     setFb((f) => ({ ...f, status: error ? "err" : "ok" }));
   }
 
+  // Old saved uploads predate window_days — fall back to the vague label.
+  const windowLabel = t.window_days ? `last ${t.window_days} days` : "this period";
   const kpis: [string, string | number, string][] = [
     ["Cleaners", t.cleaners, `${t.active_cleaners} active`],
-    ["Jobs completed", t.jobs, "this period"],
-    ["Revenue / mo", money(t.rev_mo), "run-rate"],
+    ["Jobs completed", t.jobs, windowLabel],
+    ["Revenue / mo", money(t.rev_mo), t.window_days ? `run-rate over ${windowLabel}` : "run-rate"],
     ["Recurring share", t.recurring_share + "%", "of jobs recurring"],
     ["Complaints", "—", "Limited beta"],
     ["Client credits", money(t.credits), "refunds + comps"],
@@ -93,13 +95,16 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
     else { setSortKey(k); setDir(k === "name" ? 1 : -1); }
   };
 
-  const bar = (list: Cleaner[], key: keyof Cleaner, fmt: (v: number) => string, color: (c: Cleaner) => string) => {
+  // Datasets saved before has_churn existed: infer from the providers-export fields.
+  const hasChurnData = (c: Cleaner) => c.has_churn ?? c.tot_book > 0;
+
+  const bar = (list: Cleaner[], key: keyof Cleaner, fmt: (v: number, c: Cleaner) => string, color: (c: Cleaner) => string) => {
     const mx = Math.max(...list.map((x) => (x[key] as number) || 0)) || 1;
     return list.map((c) => (
       <div className="barrow" key={c.name} data-cleaner={c.name}>
         <div className="nm">{c.name}</div>
         <div className="track"><i style={{ width: Math.max(2, (100 * ((c[key] as number) || 0)) / mx) + "%", background: color(c) }} /></div>
-        <div className="vv">{fmt(c[key] as number)}</div>
+        <div className="vv">{fmt(c[key] as number, c)}</div>
       </div>
     ));
   };
@@ -160,7 +165,7 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
                     <td className="name l">{c.name}<small>{c.clients} clients{c.Status === "Inactive" ? " · left the team" : ""}</small></td>
                     <td>{c.jobs}</td>
                     <td>{money(c.rev_mo)}</td>
-                    <td className={c.canc_rate > 7 ? "warn" : ""}>{pct1(c.canc_rate)}</td>
+                    <td className={c.canc_rate > 7 ? "warn" : ""}>{hasChurnData(c) ? pct1(c.canc_rate) : "—"}</td>
                     <td className={c.credits > 50 ? "warn" : ""}>{c.credits > 0 ? money(c.credits) : "—"}</td>
                     <td className="samptd" style={{ opacity: 0.4 }} title="Limited beta — request access on the Complaints tab">🔒</td>
                     <td><div className="scorecell"><div className="sbar"><i style={{ width: c.score + "%", background: tierColor[c.tier] }} /></div><span className="scnum">{c.score}</span></div></td>
@@ -169,15 +174,15 @@ export default function Dashboard({ data, uploadId }: { data: Dataset; uploadId?
               </tbody>
             </table>
           </div>
-          <div className="section-note">Score = 40% complaints-per-clean (restricted to limited beta) · 25% churn (cancellations) · 25% refunds+comps per job · 10% recurring retention.<br /><span style={{ color: "#9aa1ab" }}>*Churn = lifetime cancelled ÷ total bookings (a cancellation proxy until the paused/cancelled recurring export is loaded).</span></div>
+          <div className="section-note">Score = 40% complaints-per-clean (restricted to limited beta) · 25% churn (cancellations) · 25% refunds+comps as % of revenue · 10% recurring share — scored against fixed benchmarks, not graded on a curve against teammates. When churn data isn&apos;t in the upload (—), its weight is dropped, not scored as zero.<br /><span style={{ color: "#9aa1ab" }}>*Churn = lifetime cancelled ÷ total bookings from the providers export when present; otherwise cancelled ÷ total rows in this export&apos;s window. &quot;—&quot; = no cancellation data uploaded.</span></div>
         </div>
       )}
 
       {tab === "churn" && (
         <div className="panel" data-section="Churn by cleaner">
           <h2>Churn rate by cleaner <span className="mut" style={{ fontWeight: 400 }}>(cancellation proxy)</span></h2>
-          {bar([...data.cleaners].sort((a, b) => b.canc_rate - a.canc_rate), "canc_rate", (v) => pct1(v), (c) => (c.canc_rate > 7 ? "#d93025" : c.canc_rate > 5 ? "#e8930c" : "#0f9d58"))}
-          <div className="section-note">Lifetime cancelled ÷ total bookings per cleaner. True client churn — a recurring client who quits after a bad clean — is unlocked once the cancelled/paused recurring export is connected.</div>
+          {bar([...data.cleaners].sort((a, b) => b.canc_rate - a.canc_rate), "canc_rate", (v, c) => (hasChurnData(c) ? pct1(v) : "no data"), (c) => (!hasChurnData(c) ? "#c4c9d0" : c.canc_rate > 7 ? "#d93025" : c.canc_rate > 5 ? "#e8930c" : "#0f9d58"))}
+          <div className="section-note">Cancelled ÷ total bookings per cleaner — lifetime when the providers export is uploaded, otherwise within this export&apos;s window. True client churn — a recurring client who quits after a bad clean — is unlocked once the cancelled/paused recurring export is connected.</div>
         </div>
       )}
 

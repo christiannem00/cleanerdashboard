@@ -23,6 +23,7 @@ export type Cleaner = {
   tot_book: number;
   canc_book: number;
   canc_rate: number;
+  has_churn?: boolean; // false = no cancellation data in this upload (render "—", drop from score)
   op_complaints: number; // REAL complaints attributed to this cleaner (was seeded)
   complaint_per_clean: number;
   avg_rating: number | null; // provider "Average" from the providers export
@@ -308,11 +309,24 @@ export function computeDataset(files: ParsedFile[]): Dataset {
   const bookings: BookingRow[] = [];
   let discounts = 0;
 
+  // Cancelled/no-show rows are NOT delivered work — they must not inflate jobs or
+  // revenue. Tallied per cleaner instead, as a window cancellation rate that backs
+  // the churn column whenever the providers export (lifetime numbers) is absent.
+  const CANCELLED_ROW_RE = /cancel|declin|void|no.?show/i;
+  const windowCanc: Record<string, number> = {};
+  let sawStatusCol = false;
+
   rowsB.forEach((r) => {
     const names = (r["Provider/team (without ids)"] || "")
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
+    const rowStatus = String(r["Booking status"] || r["Status"] || r["Job status"] || "").trim();
+    if (rowStatus) sawStatusCol = true;
+    if (CANCELLED_ROW_RE.test(rowStatus)) {
+      names.forEach((n) => (windowCanc[n] = (windowCanc[n] || 0) + 1));
+      return;
+    }
     const dt = pdt(r["Date"]);
     const final = N(r["Final amount (USD)"]);
     const pay = N(r["Provider/team payment (USD)"] || r["Provider payment (summary) (USD)"]);
@@ -501,6 +515,17 @@ export function computeDataset(files: ParsedFile[]): Dataset {
       const days = Math.max(Math.round((+wEnd - +first) / DAY), 7);
       const credits = a.refunds + a.comps;
       const avg = N(p["Average"]);
+      // Churn source, best available first: lifetime (providers export) → this-window
+      // (cancelled rows in the bookings export) → none. Never a silent 0.0%.
+      const wCanc = windowCanc[a.name] || 0;
+      const hasChurn = tot > 0 || sawStatusCol;
+      const cancBook = tot > 0 ? canc : wCanc;
+      const cancRate =
+        tot > 0
+          ? Math.round((1000 * canc) / tot) / 10
+          : sawStatusCol && a.jobs + wCanc > 0
+            ? Math.round((1000 * wCanc) / (a.jobs + wCanc)) / 10
+            : 0;
       return {
         name: a.name,
         jobs: a.jobs,
@@ -517,8 +542,9 @@ export function computeDataset(files: ParsedFile[]): Dataset {
         is_new: (+first - +wStart) / DAY > 7,
         Status: p["Status"] || "Active",
         tot_book: tot,
-        canc_book: canc,
-        canc_rate: tot ? Math.round((1000 * canc) / tot) / 10 : 0,
+        canc_book: cancBook,
+        canc_rate: cancRate,
+        has_churn: hasChurn,
         op_complaints: a.complaints,
         complaint_per_clean: Math.round((1000 * a.complaints) / a.jobs) / 1000,
         avg_rating: avg > 0 ? avg : null,
@@ -536,22 +562,22 @@ export function computeDataset(files: ParsedFile[]): Dataset {
   if (!cleanerList.length)
     throw new ComputeError("Parsed the file, but found no cleaner with 3+ jobs to score.");
 
-  const norm = (key: keyof Cleaner, inv: boolean) => {
-    const vs = cleanerList.map((c) => c[key] as number);
-    const lo = Math.min(...vs),
-      hi = Math.max(...vs);
-    return (c: Cleaner) => {
-      if (hi === lo) return 70;
-      const z = ((c[key] as number) - lo) / (hi - lo);
-      return (inv ? 1 - z : z) * 100;
-    };
-  };
-  const nC = norm("complaint_per_clean", true);
-  const nX = norm("canc_rate", true);
-  const nCr = norm("credit_per_job", true);
-  const nRec = norm("recurring_pct", false);
+  // Absolute scoring — each component maps a real-world rate onto 0–100 against a
+  // fixed band, so a score means the same thing on any roster. (The old min-max
+  // normalization graded on a curve: the roster's worst got 0 per component even
+  // when the absolute gap was trivial — one complaint on an otherwise-clean team
+  // read as "at risk".) When a cleaner has no cancellation data, the churn weight
+  // is dropped and the rest reweighted, instead of scoring a fake 0%.
+  const band = (ratePct: number, zeroAt: number) => Math.max(0, 100 - (100 * ratePct) / zeroAt);
   cleanerList.forEach((c) => {
-    c.score = Math.round(10 * (0.4 * nC(c) + 0.25 * nX(c) + 0.25 * nCr(c) + 0.1 * nRec(c))) / 10;
+    const comp = band(100 * c.complaint_per_clean, 10); // 10%+ complaints/clean → 0
+    const credit = band(c.revenue > 0 ? (100 * c.credits) / c.revenue : 0, 5); // 5%+ of revenue handed back → 0
+    const churn = band(c.canc_rate, 30); // 30%+ cancellation rate → 0
+    const parts: [number, number][] = c.has_churn
+      ? [[0.4, comp], [0.25, churn], [0.25, credit], [0.1, c.recurring_pct]]
+      : [[0.4, comp], [0.25, credit], [0.1, c.recurring_pct]];
+    const wsum = parts.reduce((s, [w]) => s + w, 0);
+    c.score = Math.round((10 * parts.reduce((s, [w, v]) => s + w * v, 0)) / wsum) / 10;
     c.tier = c.score >= 75 ? "star" : c.score >= 50 ? "solid" : c.score >= 30 ? "watch" : "risk";
   });
   cleanerList.sort((a, b) => b.score - a.score).forEach((c, i) => (c.rank = i + 1));
@@ -635,11 +661,15 @@ export function computeDataset(files: ParsedFile[]): Dataset {
       : 30;
 
   const tj = cleanerList.reduce((s, c) => s + c.jobs, 0);
+  const trev = Math.round(cleanerList.reduce((s, c) => s + c.revenue, 0));
   const totals: Totals = {
     period: book && book.length ? "Uploaded export" : "Providers export",
     jobs: tj,
-    revenue: Math.round(cleanerList.reduce((s, c) => s + c.revenue, 0)),
-    rev_mo: Math.round(cleanerList.reduce((s, c) => s + c.rev_mo, 0)),
+    revenue: trev,
+    // Company run-rate over the export's actual span. (Summing per-cleaner rev_mo
+    // inflated this: cleaners whose first booking fell late in the window had their
+    // revenue extrapolated from just a few days.)
+    rev_mo: Math.round((trev / windowDays) * 30),
     credits: Math.round(cleanerList.reduce((s, c) => s + c.credits, 0) * 100) / 100,
     cleaners: cleanerList.length,
     active_cleaners: cleanerList.filter((c) => c.Status === "Active").length,
