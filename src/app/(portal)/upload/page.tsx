@@ -27,35 +27,57 @@ function UploadInner() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const uploadId = useRef<string | null>(null);
+  // Source of truth for what's loaded. React state above is display-only — going
+  // through a ref means a second file dropped moments after the first (or both at
+  // once) can never compute against stale state and silently lose its partner.
+  const filesRef = useRef<{ bookings: ParsedFile | null; providers: ParsedFile | null }>({
+    bookings: null,
+    providers: null,
+  });
+
+  // Which export is this? Same header rules computeDataset uses — so a providers
+  // CSV dropped on the bookings zone (or both files dragged onto one zone) still
+  // lands in the right slot instead of being mislabeled or ignored.
+  function classify(pf: ParsedFile, fallback: "bookings" | "providers"): "bookings" | "providers" {
+    const header = pf.text.slice(0, 8000).split(/\r?\n/)[0] || "";
+    if (header.includes("Provider/team (without ids)") || header.includes("Booking id")) return "bookings";
+    if (header.includes("Number Of Bookings") || header.includes("Full Name")) return "providers";
+    return fallback;
+  }
 
   function handlePick(which: "bookings" | "providers", fileList: FileList | null) {
     setErr(null);
-    const f = fileList?.[0];
-    if (!f) return;
-    const rd = new FileReader();
-    rd.onload = () => {
-      const pf: ParsedFile = { name: f.name, text: String(rd.result) };
-      const nextBookings = which === "bookings" ? pf : bookings;
-      const nextProviders = which === "providers" ? pf : providers;
-      if (which === "bookings") setBookings(pf);
-      else setProviders(pf);
+    const fs = Array.from(fileList || []);
+    if (!fs.length) return;
+    let pending = fs.length;
+    fs.forEach((f) => {
+      const rd = new FileReader();
+      rd.onload = () => {
+        const pf: ParsedFile = { name: f.name, text: String(rd.result) };
+        const slot = classify(pf, which);
+        filesRef.current[slot] = pf;
+        if (slot === "bookings") setBookings(pf);
+        else setProviders(pf);
+        if (--pending > 0) return; // compute once, after every dropped file is read
 
-      const files = [nextBookings, nextProviders].filter(Boolean) as ParsedFile[];
-      if (!nextBookings) {
-        setData(null);
-        return; // providers alone can't be scored — wait for the bookings file
-      }
-      try {
-        const ds = computeDataset(files);
-        setData(ds);
-        // Persist immediately so the report survives navigation — no manual save.
-        void persist(ds, files.map((x) => x.name).join(", "));
-      } catch (e) {
-        setData(null);
-        setErr(e instanceof ComputeError ? e.message : "Could not parse this file.");
-      }
-    };
-    rd.readAsText(f);
+        const { bookings: b, providers: p } = filesRef.current;
+        if (!b) {
+          setData(null);
+          return; // providers alone can't be scored — wait for the bookings file
+        }
+        const files = [b, p].filter(Boolean) as ParsedFile[];
+        try {
+          const ds = computeDataset(files);
+          setData(ds);
+          // Persist immediately so the report survives navigation — no manual save.
+          void persist(ds, files.map((x) => x.name).join(", "));
+        } catch (e) {
+          setData(null);
+          setErr(e instanceof ComputeError ? e.message : "Could not parse this file.");
+        }
+      };
+      rd.readAsText(f);
+    });
   }
 
   // Insert on first parse, update the same row when the providers file is added.
@@ -130,7 +152,7 @@ function UploadInner() {
             <br />
             <small>{bookings ? "Loaded — click to replace" : "Drop your Bookings CSV here, or click to choose"}</small>
           </div>
-          <input ref={bookingsRef} type="file" accept=".csv" style={{ display: "none" }} onChange={(e) => handlePick("bookings", e.target.files)} />
+          <input ref={bookingsRef} type="file" accept=".csv" multiple style={{ display: "none" }} onChange={(e) => handlePick("bookings", e.target.files)} />
         </div>
         <div
           className={"drop" + (over === "providers" ? " over" : "")}
@@ -146,7 +168,7 @@ function UploadInner() {
             <br />
             <small>{providers ? "Loaded — click to replace" : "Drop your Providers CSV here — unlocks Churn %"}</small>
           </div>
-          <input ref={providersRef} type="file" accept=".csv" style={{ display: "none" }} onChange={(e) => handlePick("providers", e.target.files)} />
+          <input ref={providersRef} type="file" accept=".csv" multiple style={{ display: "none" }} onChange={(e) => handlePick("providers", e.target.files)} />
         </div>
       </div>
       {providers && !bookings && (
