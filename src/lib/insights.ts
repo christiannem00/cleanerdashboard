@@ -44,7 +44,7 @@ export function pickInsight(data: Dataset): InsightResult {
   const cleaners = data.cleaners.filter((c) => c.jobs > 0);
   const annual = annualizer(data);
   const teamCredits = cleaners.reduce((s, c) => s + c.credits, 0);
-  const hasChurn = cleaners.some((c) => c.tot_book > 0);
+  const hasChurn = cleaners.some((c) => c.has_churn ?? c.tot_book > 0);
 
   const byCredits = [...cleaners].sort((a, b) => b.credits - a.credits);
   const byRevMo = [...cleaners].sort((a, b) => b.rev_mo - a.rev_mo);
@@ -60,9 +60,17 @@ export function pickInsight(data: Dataset): InsightResult {
   //    insight is consistent (never celebrates the top cleaner, never flips between
   //    pages). Dominant wow so it wins whenever the worst cleaner has a real issue.
   const worst = [...cleaners].sort((a, b) => a.score - b.score)[0];
+  // Only headline someone as the weakest cleaner for problems that are real in
+  // ABSOLUTE terms — a single complaint or a token refund on an otherwise clean
+  // roster is not a "$X/yr tied up" story.
   const worstHasIssue =
     worst &&
-    (worst.op_complaints > 0 || worst.credits > 0 || (hasChurn && worst.canc_rate >= 8) || worst.tier === "risk" || worst.tier === "watch");
+    (worst.op_complaints >= 2 ||
+      (worst.jobs > 0 && (100 * worst.op_complaints) / worst.jobs >= 5) ||
+      (hasChurn && worst.canc_rate >= 8) ||
+      worst.credits >= 150 ||
+      (worst.revenue > 0 && (100 * worst.credits) / worst.revenue >= 3) ||
+      worst.tier === "risk");
   if (worst && worstHasIssue && cleaners.length >= 2) {
     const bits: string[] = [];
     if (worst.op_complaints > 0) bits.push(`${worst.op_complaints} service complaint${worst.op_complaints > 1 ? "s" : ""}`);
@@ -85,7 +93,9 @@ export function pickInsight(data: Dataset): InsightResult {
   }
 
   // A. Concentrated leak — one cleaner holds a big share of all money given back.
-  if (teamCredits >= 40 && worstLeaker && worstLeaker.credits > 0) {
+  // Same absolute-severity bar as the weakest-cleaner hero: a single small refund
+  // ($113) shouldn't become a "$1,500/yr leak" headline about one person.
+  if (teamCredits >= 40 && worstLeaker && worstLeaker.credits >= 150) {
     const share = worstLeaker.credits / teamCredits;
     const annualLeak = annual(worstLeaker.credits);
     if (share >= 0.34 && annualLeak >= 250) {
